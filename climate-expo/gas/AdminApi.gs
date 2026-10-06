@@ -284,7 +284,7 @@ function apiAdminDistributeDisasters(token) {
     bump_(['Teams', 'DisasterResponses']);
   });
   var st = apiAdminState(token);
-  st.message = count ? count + '개 팀에 재난 카드를 배부했어요.' : '새로 배부할 팀이 없어요. (기후를 뽑았고 재난 카드가 없는 팀만 배부)';
+  st.message = count ? count + '개 팀에 재난 카드를 배부했어요.' : '새로 배부할 팀이 없어요. (기후가 정해졌고 재난 카드가 없는 팀만 배부)';
   return st;
 }
 
