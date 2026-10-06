@@ -25,3 +25,10 @@
 
 ## 웹 주소로 배포 (GitHub Pages)
 저장소 Settings → Pages → Build and deployment에서 Source를 **Deploy from a branch**로, Branch를 `claude/cool-cori-6cne6l` / `/(root)`로 정하고 Save를 누르면 몇 분 뒤 https://jongku93.github.io/KJG/ 에서 열립니다.
+
+---
+
+# 2050 기후 도시 엑스포 (`climate-expo/`)
+
+6학년 사회 「세계의 다양한 기후와 생활 모습」 프로젝트 수업용 웹앱. 화면은 GitHub Pages, 데이터는 Google Apps Script + 스프레드시트.
+배포 방법과 수업 당일 체크리스트는 [`climate-expo/README.md`](climate-expo/README.md)를 보세요.

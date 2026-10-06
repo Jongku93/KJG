@@ -7,7 +7,9 @@ function apiAdminLogin(pin) {
   var fails = Number(cache.get('adminFail') || 0);
   if (fails >= 8) throw new Error('PIN을 여러 번 틀렸어요. 5분 뒤에 다시 시도하세요.');
   var real = String(getSettings_().ADMIN_PIN || '').trim();
-  if (!real || String(pin || '').trim() !== real) {
+  var given = String(pin || '').trim();
+  var same = given === real || (/^\d+$/.test(given) && /^\d+$/.test(real) && Number(given) === Number(real));
+  if (!real || !same) {
     cache.put('adminFail', String(fails + 1), 300);
     Utilities.sleep(800);
     throw new Error('PIN이 맞지 않아요.');

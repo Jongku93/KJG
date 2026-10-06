@@ -134,7 +134,8 @@ function computeResults_(ctx) {
       reasons: (reasons[t.id] || []).slice(0, 12)
     };
   });
-  list.sort(function (a, b) { return b.coins - a.coins || a.id.localeCompare(b.id, 'ko', { numeric: true }); });
+  var idNum = function (id) { return Number(String(id).replace(/\D/g, '')) || 0; };
+  list.sort(function (a, b) { return b.coins - a.coins || idNum(a.id) - idNum(b.id); });
   list.forEach(function (r, i) {
     r.rank = (i > 0 && list[i - 1].coins === r.coins) ? list[i - 1].rank : i + 1;
   });
