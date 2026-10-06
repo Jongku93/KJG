@@ -14,7 +14,7 @@ function ss_() {
   try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { ss = null; }
   if (!ss) {
     var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!id) throw new Error('스프레드시트를 찾을 수 없어요. 스프레드시트의 [확장 프로그램 → Apps Script]에서 만든 스크립트인지 확인하세요.');
+    if (!id) throw new Error('스프레드시트를 찾을 수 없어요. 스프레드시트의 [확장 프로그램 → Apps Script]에서 만들거나, 프로젝트 설정 → 스크립트 속성에 SPREADSHEET_ID(스프레드시트 주소의 /d/와 /edit 사이 글자)를 추가하세요.');
     ss = SpreadsheetApp.openById(id);
   }
   _ssMemo = ss;
