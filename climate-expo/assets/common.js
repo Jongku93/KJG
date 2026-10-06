@@ -13,11 +13,25 @@
     return (window.EXPO_CONFIG && window.EXPO_CONFIG.API_URL) || '';
   }
 
+  /** API_URL 형식 점검: 문제가 있으면 안내 문장, 괜찮으면 '' */
+  function apiUrlProblem(url) {
+    url = url || apiUrl();
+    if (!url) return '서버 주소(API_URL)가 설정되지 않았어요. 선생님께 알려 주세요.';
+    if (/^https:\/\/script\.googleusercontent\.com\//.test(url)) {
+      return 'config.js의 API_URL이 잘못됐어요(googleusercontent 주소). Apps Script [배포 → 배포 관리]에서 "웹 앱 URL"(https://script.google.com/macros/s/…/exec)을 복사해 넣으세요.';
+    }
+    if (/^https:\/\/script\.google\.com\//.test(url) && !/\/exec(\?|$)/.test(url)) {
+      return 'config.js의 API_URL이 /exec 로 끝나지 않아요. [배포 → 배포 관리]의 "웹 앱 URL"을 그대로 복사해 넣으세요.';
+    }
+    return '';
+  }
+
   /** 서버 함수 호출. 실패하면 한국어 메시지를 담은 Error */
   async function api(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
     var url = apiUrl();
-    if (!url) throw new Error('서버 주소(API_URL)가 설정되지 않았어요. 선생님께 알려 주세요.');
+    var problem = apiUrlProblem(url);
+    if (problem) throw new Error(problem);
     var res;
     try {
       res = await fetch(url, {
@@ -27,7 +41,7 @@
         redirect: 'follow'
       });
     } catch (e) {
-      var err = new Error('서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+      var err = new Error('서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요. (계속 이러면: 웹앱 배포의 액세스 권한이 "모든 사용자"인지 확인)');
       err.network = true;
       throw err;
     }
@@ -147,7 +161,7 @@
   }
 
   window.Expo = {
-    api: api, apiUrl: apiUrl, esc: esc, escBr: escBr, $: $, $all: $all, toast: toast, modal: modal,
+    api: api, apiUrl: apiUrl, apiUrlProblem: apiUrlProblem, esc: esc, escBr: escBr, $: $, $all: $all, toast: toast, modal: modal,
     confirmBox: confirmBox, busy: busy, confetti: confetti, store: store, mentionsClimate: mentionsClimate
   };
 })();

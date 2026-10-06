@@ -82,7 +82,7 @@
       '<div class="section-label">TEACHER CONSOLE</div>' +
       '<div class="hero-title"><span>2050 기후 도시</span><br>엑스포 관리</div>' +
       '<p class="muted" style="margin-top:10px">교사용 PIN을 입력하세요. (처음 PIN은 1234, Settings 탭에서 바꿀 수 있어요)</p>' +
-      (E.apiUrl() ? '' : '<p class="chip bad">config.js에 API_URL이 비어 있어요. README를 보고 먼저 설정하세요.</p>') +
+      (E.apiUrlProblem() ? '<p class="chip bad" style="border-radius:10px;padding:8px 12px">' + esc(E.apiUrlProblem()) + '</p>' : '') +
       '<form id="pinForm" class="stack" style="margin-top:14px">' +
       '<input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" class="code-input" style="letter-spacing:.3em">' +
       '<button class="btn primary lg block" type="submit">입장</button></form>' +

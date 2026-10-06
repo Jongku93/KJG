@@ -118,7 +118,7 @@
       '<div class="section-label">WORLD CITY LEAGUE · 2050</div>' +
       '<div class="hero-title"><span>2050 기후 도시</span><br>엑스포</div>' +
       '<p class="muted" style="margin-top:10px">세계도시연맹의 의뢰를 받은 도시설계 회사 여러분, 환영합니다.</p>' +
-      (E.apiUrl() ? '' : '<p class="chip bad">서버 주소가 설정되지 않았어요. 선생님께 알려 주세요.</p>') +
+      (E.apiUrlProblem() ? '<p class="chip bad" style="border-radius:10px;padding:8px 12px">' + esc(E.apiUrlProblem()) + '</p>' : '') +
       '<form id="codeForm" class="stack" style="margin-top:16px">' +
       '<label class="lbl" for="teamCode">팀 코드</label>' +
       '<input id="teamCode" class="code-input" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="____">' +
