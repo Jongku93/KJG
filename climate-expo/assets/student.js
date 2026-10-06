@@ -57,6 +57,7 @@
   function forceLogout() {
     S.session = null;
     S.st = null;
+    S.voteDraft = null;
     E.store('expo_session', null);
     clearInterval(S.timer);
     renderLogin();
@@ -740,10 +741,241 @@
     }
   }
 
-  /* ---------- 4단계·결과 (다음 단계에서 추가) ---------- */
+  /* ---------- 4단계: 포스터 · 엑스포 · 투자 ---------- */
 
-  VIEWS.s4 = { render: function () { return lockedPanel('🚧', '준비 중', ''); } };
-  VIEWS.results = { render: function () { return lockedPanel('🚧', '준비 중', ''); } };
+  function draftKey() { return 'expo_vote_' + S.st.team.id + '_' + S.st.me.no; }
+  function getDraft() {
+    if (!S.voteDraft) S.voteDraft = E.store(draftKey()) || { alloc: {}, reasons: {} };
+    return S.voteDraft;
+  }
+  function saveDraft() { E.store(draftKey(), S.voteDraft); }
+  function otherTeams() { return (S.st.expo || []).filter(function (t) { return !t.mine; }); }
+
+  VIEWS.s4 = {
+    sig: function () {
+      var st = S.st;
+      return [stage(4).open, S.sub4, st.vote.open, st.vote.done, st.team.poster].join('|') + (S.sub4 === 'expo' ? JSON.stringify(st.expo) : '');
+    },
+    render: function () {
+      var st = S.st;
+      if (!stage(4).open) return lockedPanel('🔒', '4단계는 선생님이 열면 시작해요', 'Canva로 포스터를 만들 준비를 해 두세요.');
+      var tabs = [['poster', '🎨 포스터 제출' + (st.team.poster ? ' ✓' : '')], ['expo', '🏛️ 엑스포 관람'],
+        ['vote', '🪙 투자 투표' + (st.vote.done ? ' ✓' : (st.vote.open ? '' : ' 🔒'))]];
+      return '<div class="seg" id="seg4" style="margin-bottom:14px">' + tabs.map(function (t) {
+        return '<button class="' + (S.sub4 === t[0] ? 'on' : '') + '" data-sub="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div><div id="sub4">' + SUB4[S.sub4]() + '</div>';
+    },
+    bind: function (el) {
+      $all('[data-sub]', el).forEach(function (b) {
+        b.addEventListener('click', function () { S.sub4 = b.dataset.sub; renderView(); });
+      });
+      SUB4BIND[S.sub4](el);
+    },
+    patch: function () { /* 투표 고르는 중에는 화면을 다시 그리지 않음 */ }
+  };
+
+  var SUB4 = {
+    poster: function () {
+      var st = S.st;
+      return '<div class="card"><div class="card-title"><h2>🎨 Canva 포스터 제출</h2><span class="chip">팀당 1개</span></div>' +
+        '<ol class="rules">' +
+        '<li>Canva에서 우리 도시 포스터를 완성해요. <span class="muted small">도시 이름, 기후, 직책별 설계와 "이 기후라서" 이유, 재난 대응이 들어가면 좋아요.</span></li>' +
+        '<li>Canva 오른쪽 위 <b>[공유]</b>를 눌러 접근 권한을 <b>"링크가 있는 모든 사용자"(보기 가능)</b>로 바꿔요.</li>' +
+        '<li>링크를 복사해서 아래에 붙여넣고 [제출]을 눌러요. 다시 제출하면 새 링크로 바뀌어요.</li></ol>' +
+        (st.team.poster ? '<div class="question" style="margin:12px 0">✅ 제출된 포스터: <a href="' + esc(st.team.poster) + '" target="_blank" rel="noopener">새 창에서 열기</a>' +
+          ' <span class="small muted">(친구 기기에서도 열리는지 확인해요)</span></div>' : '') +
+        '<form id="posterForm" class="row" style="margin-top:12px"><input type="url" id="posterUrl" class="grow" style="flex:1 1 260px" placeholder="https://www.canva.com/design/..." value="' + esc(st.team.poster) + '">' +
+        '<button class="btn primary" type="submit">' + (st.team.poster ? '바꾸기' : '제출') + '</button></form></div>';
+    },
+    expo: function () {
+      var list = S.st.expo || [];
+      if (!list.length) return '<div class="card"><p class="muted">아직 참가한 도시가 없어요.</p></div>';
+      return '<p class="muted small" style="margin:0 0 10px">도시 카드를 누르면 자세한 설계를 볼 수 있어요. 투자할 도시를 미리 골라 두세요.</p>' +
+        '<div class="city-grid">' + list.map(function (t) {
+          var whyCount = t.roles.filter(function (r) { return String(r.why || '').trim(); }).length;
+          return '<div class="city" data-city="' + esc(t.id) + '" style="--c:' + esc(t.color) + '"><div class="band"></div><div class="body">' +
+            (t.mine ? '<span class="chip accent mine-tag">우리 팀</span>' : '') +
+            '<div class="row"><span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span><span class="small muted">' + esc(t.name) + '</span></div>' +
+            '<h3>' + esc(t.city || t.name + '의 도시') + '</h3>' +
+            '<p class="small muted" style="margin:0">' + esc(t.intro || '소개 준비 중') + '</p>' +
+            '<div class="row small" style="margin-top:auto;padding-top:6px">' +
+            '<span class="chip">📐 이유 ' + whyCount + '/4</span>' +
+            (t.disaster ? '<span class="chip bad">🌪️ ' + esc(t.disaster.name) + '</span>' : '') +
+            (t.poster ? '<span class="chip ok">🎨 포스터</span>' : '<span class="chip">포스터 준비 중</span>') + '</div>' +
+            '</div></div>';
+        }).join('') + '</div>';
+    },
+    vote: function () {
+      var st = S.st;
+      if (!st.vote.open && !st.vote.done) {
+        return lockedPanel('🪙', '투자 투표는 선생님이 열면 시작돼요', '그동안 엑스포에서 도시들을 살펴보고, 기후와 가장 잘 연결된 도시를 골라 두세요.');
+      }
+      if (st.vote.done) {
+        var names = {};
+        (st.expo || []).forEach(function (t) { names[t.id] = t; });
+        return '<div class="card center"><div style="font-size:3rem">🪙</div><h2>투자 완료!</h2><p class="muted">투자는 한 번만 할 수 있어요. 결과 발표를 기다려요.</p>' +
+          '<div style="max-width:420px;margin:0 auto;text-align:left">' + st.vote.mine.map(function (v) {
+            var t = names[v.target] || { name: v.target, city: '' };
+            return '<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>' + esc(t.icon || '') + ' ' + esc(t.city || t.name) + '</span><b style="color:var(--gold)">🪙 ' + v.coins + '</b></div>';
+          }).join('') + '</div></div>';
+      }
+      var d = getDraft();
+      var coins = st.settings.coins;
+      var others = otherTeams();
+      var used = others.reduce(function (a, t) { return a + (d.alloc[t.id] || 0); }, 0);
+      var left = coins - used;
+      return '<div class="card"><div class="card-title"><h2>🪙 투자 투표</h2></div>' +
+        '<p class="small muted">코인 ' + coins + '개를 다른 팀 도시에 나눠 투자해요. 우리 팀에는 투자할 수 없고, <b>제출하면 바꿀 수 없어요.</b> 기준: 기후와 설계가 얼마나 잘 연결되었나?</p>' +
+        '<div class="row between" style="margin:10px 0"><b>남은 코인 <span id="leftNum" style="color:var(--gold)">' + left + '</span>개</b></div>' +
+        '<div class="coins-bank" id="bank">' + coinBank(left, coins) + '</div>' +
+        '<div style="margin-top:8px">' + others.map(function (t) {
+          var n = d.alloc[t.id] || 0;
+          return '<div class="invest-row" data-team="' + esc(t.id) + '"><div><div class="row"><span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span>' +
+            '<b>' + esc(t.city || t.name) + '</b></div><div class="small muted">' + esc(t.name) + (t.intro ? ' · ' + esc(t.intro) : '') + '</div>' +
+            '<input type="text" class="reason" maxlength="120" placeholder="투자 이유 (선택): 어떤 점이 기후와 잘 연결됐나요?" value="' + esc(d.reasons[t.id] || '') + '" style="margin-top:8px;' + (n ? '' : 'display:none') + '"></div>' +
+            '<div class="stepper"><button type="button" data-step="-1" aria-label="빼기">−</button><span class="val">' + n + '</span><button type="button" data-step="1" aria-label="더하기">+</button></div></div>';
+        }).join('') + '</div>' +
+        '<button class="btn gold lg block" id="btnVote" style="margin-top:16px" ' + (left === 0 ? '' : 'disabled') + '>' + (left === 0 ? '투자 제출하기' : '코인을 모두 나눠 주세요 (' + left + '개 남음)') + '</button></div>';
+    }
+  };
+
+  function coinBank(left, total) {
+    var html = '';
+    for (var i = 0; i < total; i++) html += i < left ? '<span class="coin">₵</span>' : '<span class="coin empty"></span>';
+    return html;
+  }
+
+  var SUB4BIND = {
+    poster: function (el) {
+      $('#posterForm', el).addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        var url = $('#posterUrl').value.trim();
+        if (!/^https:\/\//.test(url)) { toast('https:// 로 시작하는 링크를 붙여넣어 주세요.', 'error'); return; }
+        if (!/canva\.(com|link)/.test(url)) {
+          var ok = await E.confirmBox('Canva 링크가 아닌 것 같아요', '<p>' + esc(url) + '</p><p>그래도 제출할까요?</p>', '제출');
+          if (!ok) return;
+        }
+        try {
+          var st = await E.busy(ev.target.querySelector('button'), function () { return sapi('submitPoster', url); });
+          applyState(st);
+          toast('포스터 링크를 제출했어요!', 'ok');
+        } catch (e) { /* 알림됨 */ }
+      });
+    },
+    expo: function (el) {
+      $all('[data-city]', el).forEach(function (c) {
+        c.addEventListener('click', function () { cityDetail(c.dataset.city); });
+      });
+    },
+    vote: function (el) {
+      var btn = $('#btnVote', el);
+      if (!btn) return;
+      var d = getDraft();
+      var coins = S.st.settings.coins;
+      function update() {
+        var used = otherTeams().reduce(function (a, t) { return a + (d.alloc[t.id] || 0); }, 0);
+        var left = coins - used;
+        $('#leftNum').textContent = left;
+        $('#bank').innerHTML = coinBank(left, coins);
+        $all('.invest-row', el).forEach(function (row) {
+          var n = d.alloc[row.dataset.team] || 0;
+          $('.val', row).textContent = n;
+          $('[data-step="-1"]', row).disabled = n <= 0;
+          $('[data-step="1"]', row).disabled = left <= 0;
+          $('.reason', row).style.display = n ? '' : 'none';
+        });
+        btn.disabled = left !== 0;
+        btn.textContent = left === 0 ? '투자 제출하기' : '코인을 모두 나눠 주세요 (' + left + '개 남음)';
+        saveDraft();
+      }
+      $all('[data-step]', el).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = b.closest('.invest-row').dataset.team;
+          d.alloc[id] = Math.max(0, (d.alloc[id] || 0) + Number(b.dataset.step));
+          update();
+        });
+      });
+      $all('.reason', el).forEach(function (inp) {
+        inp.addEventListener('input', function () { d.reasons[inp.closest('.invest-row').dataset.team] = inp.value; saveDraft(); });
+      });
+      btn.addEventListener('click', async function () {
+        var others = otherTeams().filter(function (t) { return d.alloc[t.id]; });
+        var ok = await E.confirmBox('이대로 투자할까요?', '<p class="small muted">제출하면 바꿀 수 없어요.</p>' + others.map(function (t) {
+          return '<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(t.icon) + ' ' + esc(t.city || t.name) + '</span><b style="color:var(--gold)">🪙 ' + d.alloc[t.id] + '</b></div>';
+        }).join(''), '투자 확정', 'gold');
+        if (!ok) return;
+        var alloc = {}, reasons = {};
+        others.forEach(function (t) { alloc[t.id] = d.alloc[t.id]; reasons[t.id] = (d.reasons[t.id] || '').trim(); });
+        try {
+          var st = await E.busy(btn, function () { return sapi('submitVote', alloc, reasons); });
+          E.store(draftKey(), null);
+          S.voteDraft = null;
+          applyState(st);
+          E.confetti(['#f7c54d', '#ffe9a6', '#ffffff']);
+          toast('투자를 마쳤어요!', 'ok');
+        } catch (e) { poll(); }
+      });
+      update();
+    }
+  };
+
+  function cityDetail(id) {
+    var t = (S.st.expo || []).filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    var empty = '<span class="muted">(아직 비어 있음)</span>';
+    var roles = S.st.roles;
+    var html = '<div class="row"><span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span><span class="muted">' + esc(t.name) + '</span></div>' +
+      (t.intro ? '<p style="margin-top:8px">' + esc(t.intro) + '</p>' : '') +
+      t.roles.map(function (r) {
+        var info = roles.filter(function (x) { return x.id === r.role; })[0];
+        return '<div class="detail-section"><h4>' + info.icon + ' ' + esc(info.name) + (r.holder ? ' <span class="muted small">· ' + esc(r.holder) + '</span>' : '') + '</h4>' +
+          '<p>' + (r.what ? escBr(r.what) : empty) + '</p>' +
+          '<p class="why">💡 이 기후라서: ' + (r.why ? escBr(r.why) : empty) + '</p></div>';
+      }).join('') +
+      '<div class="detail-section"><h4>🏺 전통 생활 계승</h4><p>' + (t.tradition.keep ? escBr(t.tradition.keep) : empty) + '</p>' +
+      (t.tradition.future ? '<p class="small">→ 미래식으로: ' + escBr(t.tradition.future) + '</p>' : '') + '</div>' +
+      '<div class="detail-section"><h4>🌪️ 재난: ' + esc(t.disaster ? t.disaster.name : '없음') + '</h4>' +
+      '<p>' + (t.response.survive ? escBr(t.response.survive) : empty) + '</p>' +
+      (t.response.fix ? '<p class="small">🔧 고친 점: ' + escBr(t.response.fix) + '</p>' : '') + '</div>';
+    var buttons = [{ label: '닫기', value: null, cls: 'ghost' }];
+    if (t.poster) buttons.push({ label: '🎨 포스터 보기', value: 'poster', cls: 'primary' });
+    E.modal({ title: t.city || t.name, html: html, wide: true, buttons: buttons }).then(function (v) {
+      if (v === 'poster') window.open(t.poster, '_blank', 'noopener');
+    });
+  }
+
+  /* ---------- 결과 발표 ---------- */
+
+  VIEWS.results = {
+    render: function () {
+      var list = S.st.results;
+      if (!list) return lockedPanel('🏆', '결과 발표 전이에요', '선생님이 결과를 공개하면 여기에서 볼 수 있어요.');
+      var top = list.filter(function (r) { return r.rank === 1 && r.coins > 0; });
+      var maxCoins = Math.max.apply(null, [1].concat(list.map(function (r) { return r.coins; })));
+      var mine = list.filter(function (r) { return r.id === S.st.team.id; })[0];
+      return (top.length ? top.map(function (r) {
+        return '<div class="winner" style="--c:' + esc(r.color) + ';margin-bottom:14px"><div class="crown">👑</div><div class="section-label" style="color:var(--gold)">2050 EXPO WINNER</div>' +
+          '<h2>' + esc(r.icon) + ' ' + esc(r.city) + '</h2><p class="muted">' + esc(r.name) + ' · ' + esc(r.climate) + ' 기후 · 🪙 ' + r.coins + '개 · 투자자 ' + r.investors + '명</p>' +
+          (r.intro ? '<p>' + esc(r.intro) + '</p>' : '') +
+          (r.reasons.length ? '<div class="reasons" style="justify-content:center;margin-top:10px">' + r.reasons.slice(0, 6).map(function (x) { return '<span>“' + esc(x) + '”</span>'; }).join('') + '</div>' : '') +
+          (r.poster ? '<p style="margin-top:12px"><a class="btn gold" href="' + esc(r.poster) + '" target="_blank" rel="noopener">🎨 우승 포스터 보기</a></p>' : '') + '</div>';
+      }).join('') : '') +
+      (mine ? '<div class="card flat center" style="margin-bottom:14px"><b>' + esc(S.st.team.name) + '</b>은(는) <b style="color:var(--gold)">' + mine.rank + '위</b> · 🪙 ' + mine.coins + '개를 받았어요.</div>' : '') +
+      '<div class="card"><div class="card-title"><h2>📊 투자 순위</h2></div><div class="bars">' + list.map(function (r) {
+        return '<div class="bar-row"><div class="rk ' + (r.rank === 1 ? 'top' : '') + '">' + r.rank + '</div>' +
+          '<div class="bar" style="--c:' + esc(r.color) + '"><i style="width:' + Math.round(r.coins / maxCoins * 100) + '%"></i>' +
+          '<span><span>' + esc(r.icon) + ' ' + esc(r.city) + ' <span class="muted small">' + esc(r.name) + '</span></span><span>🪙 ' + r.coins + '</span></span></div></div>';
+      }).join('') + '</div></div>';
+    },
+    bind: function () {
+      var key = 'expo_confetti_' + S.st.team.id;
+      if (S.st.results && !E.store(key)) {
+        E.store(key, 1);
+        var top = S.st.results.filter(function (r) { return r.rank === 1; });
+        E.confetti(top.map(function (r) { return r.color; }).concat(['#f7c54d', '#ffffff']));
+      }
+    }
+  };
 
   /* ---------- 시작 ---------- */
 

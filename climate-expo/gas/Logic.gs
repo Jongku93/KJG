@@ -118,7 +118,11 @@ function computeResults_(ctx) {
     var c = num_(v.coins, 0);
     coins[v.target] = (coins[v.target] || 0) + c;
     (investors[v.target] = investors[v.target] || {})[String(v.voterNo)] = true;
-    if (filled_(v.reason)) (reasons[v.target] = reasons[v.target] || []).push(String(v.reason));
+    if (filled_(v.reason)) {
+      var list = reasons[v.target] = reasons[v.target] || [];
+      var txt = String(v.reason).trim();
+      if (list.indexOf(txt) < 0) list.push(txt);
+    }
   });
   var list = ctx.teams.filter(function (t) { return t.climate; }).map(function (t) {
     var d = designOf_(ctx, t.id).values;
