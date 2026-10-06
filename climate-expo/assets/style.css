@@ -202,7 +202,7 @@ label.lbl { display: block; font-weight: 700; margin-bottom: 6px; }
 }
 
 /* ---------- 카드 뒤집기 ---------- */
-.deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; perspective: 1200px; }
+.deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 180px)); justify-content: center; gap: 14px; perspective: 1200px; }
 .flip { position: relative; aspect-ratio: 3 / 4; cursor: default; }
 .flip .inner {
   position: absolute; inset: 0; transition: transform .8s cubic-bezier(.2, .8, .2, 1); transform-style: preserve-3d;
@@ -223,13 +223,13 @@ label.lbl { display: block; font-weight: 700; margin-bottom: 6px; }
 .flip .front { transform: rotateY(180deg); background: linear-gradient(160deg, var(--c, #335), #0e1428 120%); }
 .flip .front .ico { font-size: 2.6rem; }
 .flip .front .nm { font-size: 1.3rem; font-weight: 900; }
-.flip .front .who { margin: 6px 0 0; font-size: .78rem; background: rgba(0, 0, 0, .3); padding: 2px 8px; border-radius: 999px; }
+.flip .front .card-tag { margin: 6px 0 0; font-size: .78rem; background: rgba(0, 0, 0, .3); padding: 2px 8px; border-radius: 999px; }
 .flip.pickable { cursor: pointer; }
 .flip.pickable:hover .inner { transform: translateY(-6px) rotate(-1deg); }
 .flip.pickable:hover .back { border-color: var(--accent); }
 .flip.taken { opacity: .45; }
 .flip.mine { outline: 3px solid var(--gold); border-radius: 18px; }
-.flip.big { max-width: 260px; margin: 0 auto; }
+.flip.big { width: 100%; max-width: 220px; margin: 0 auto; }
 .flip.shake .inner { animation: shake .5s; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
@@ -399,7 +399,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
 @media (max-width: 560px) {
   body { font-size: 15px; }
   .wrap { padding: 12px; }
-  .deck { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .deck { grid-template-columns: repeat(2, minmax(0, 160px)); gap: 10px; }
   .card { padding: 14px; }
   .brand small { display: none; }
   .who .name-full, .hide-sm { display: none !important; }
