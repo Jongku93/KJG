@@ -67,7 +67,8 @@ class Spreadsheet {
   getUrl() { return 'https://docs.google.com/spreadsheets/d/MOCK/edit'; }
 }
 
-function createGas() {
+function createGas(opts) {
+  opts = opts || {};
   const ss = new Spreadsheet();
   ss.insertSheet('시트1');
   const cacheStore = new Map();
@@ -106,8 +107,9 @@ function createGas() {
   };
   vm.createContext(context);
   const dir = path.join(__dirname, '..', 'gas');
-  fs.readdirSync(dir).filter((f) => f.endsWith('.gs')).sort().forEach((f) => {
-    vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), context, { filename: f });
+  const files = opts.files || fs.readdirSync(dir).filter((f) => f.endsWith('.gs')).sort().map((f) => path.join(dir, f));
+  files.forEach((f) => {
+    vm.runInContext(fs.readFileSync(f, 'utf8'), context, { filename: path.basename(f) });
   });
   context._ss = ss;
   context._cache = cacheStore;

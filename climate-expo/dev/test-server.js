@@ -2,7 +2,8 @@
 'use strict';
 const assert = require('assert');
 const { createGas } = require('./mock-gas');
-const g = createGas();
+const path = require('path');
+const g = createGas(process.argv[2] === 'bundle' ? { files: [path.join(__dirname, '..', 'dist', 'Code.gs')] } : undefined);
 g.console = { log() {}, error() {} };
 
 function call(fn, ...args) {
