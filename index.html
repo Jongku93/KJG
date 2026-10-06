@@ -174,6 +174,138 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
   #printArea{display:block}
   #printArea svg{width:100%;height:auto}
 }
+/* 상단 탭 */
+.apptabs{display:flex;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:5px}
+.apptabs button{border:0;background:transparent;color:#d6dcff;font-weight:800;border-radius:11px;padding:9px 16px;display:inline-flex;align-items:center;gap:7px;font-size:15px}
+.apptabs button svg{width:18px;height:18px}
+.apptabs button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.apptabs button.on{background:#fff;color:var(--bg)}
+.page[hidden]{display:none!important}
+.sub-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin:-6px 0 12px}
+/* 화음 길잡이 */
+#score .cchip{cursor:pointer}
+#score .cchip:hover rect{stroke:#3454e0}
+.chord-pop{position:absolute;z-index:30;background:#fff;border-radius:14px;box-shadow:0 12px 30px rgba(20,30,80,.25);border:1px solid var(--card-b);padding:8px;display:none;width:250px}
+.chord-pop.show{display:block}
+.chord-pop .ttl{font-size:12px;font-weight:800;color:var(--muted);padding:2px 6px 6px}
+.chord-pop button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:transparent;border-radius:10px;padding:7px 8px;text-align:left}
+.chord-pop button:hover{background:var(--accent-soft)}
+.chord-pop button.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.chord-pop .rn{font-family:Georgia,serif;font-weight:800;font-size:18px;width:34px;text-align:center}
+.chord-pop .nm{font-weight:800;font-size:13.5px}
+.chord-pop .nm small{display:block;color:var(--muted);font-weight:600;font-size:12px}
+/* 이론 */
+.theory{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+@media (max-width:880px){.theory{grid-template-columns:1fr}}
+.lesson-nav{position:sticky;top:12px}
+@media (max-width:880px){.lesson-nav{position:static}}
+.lesson-nav ol{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px}
+.lesson-nav li button{width:100%;text-align:left;border:0;background:transparent;border-radius:12px;padding:8px 10px;display:flex;gap:10px;align-items:center;font-weight:700}
+.lesson-nav li button:hover{background:#fff}
+.lesson-nav li button.on{background:#fff;box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent-2)}
+.lesson-nav .ln{width:24px;height:24px;border-radius:8px;background:#fff;border:1.5px solid var(--card-b);display:grid;place-items:center;font-size:12px;font-weight:900;flex:none}
+.lesson-nav li button.on .ln{background:var(--accent);border-color:var(--accent);color:#fff}
+.lesson-nav li button.done .ln{background:var(--green);border-color:var(--green);color:#fff}
+.lesson-nav small{display:block;font-weight:600;color:var(--muted);font-size:11.5px}
+.lesson{padding:22px 24px}
+.lesson .kicker{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.3px}
+.lesson h3{font-size:24px;margin:2px 0 4px;letter-spacing:-.4px}
+.lesson .lead{color:var(--muted);font-weight:600;margin:0 0 16px}
+.lesson p{margin:8px 0}
+.lesson h4{margin:20px 0 8px;font-size:16px}
+.idea{background:#fff;border-radius:14px;padding:12px 14px;border-left:5px solid var(--accent);margin:12px 0;font-weight:600}
+.idea.green{border-left-color:var(--green)}
+.idea.amber{border-left-color:var(--amber)}
+.ex{background:#fff;border-radius:16px;padding:12px 12px 10px;margin:12px 0;border:1px solid var(--card-b)}
+.ex .cap{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.ex .cap b{font-size:14px}
+.ex .btns{display:flex;gap:6px;flex-wrap:wrap}
+.mini-score{display:block;width:100%}
+.mini-score .ev{color:#1b2140}
+.mini-score .ev.playing{color:var(--orange)}
+.pbtn{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:7px 12px;font-weight:800;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.pbtn.alt{background:#fff;color:var(--accent-2);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.pbtn.playing{background:var(--orange);color:#fff;box-shadow:none}
+.chord-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media (max-width:640px){.chord-cards{grid-template-columns:1fr}}
+.ccard{background:#fff;border-radius:16px;padding:14px;border:1px solid var(--card-b);display:flex;flex-direction:column;gap:6px}
+.ccard .rn{font-family:Georgia,serif;font-size:30px;font-weight:800;line-height:1}
+.ccard .role{font-weight:800}
+.ccard .tones{font-size:13px;color:var(--muted);font-weight:700}
+.ccard .feel{font-size:13.5px}
+.ccard.c1{border-top:5px solid var(--green)}
+.ccard.c4{border-top:5px solid var(--accent)}
+.ccard.c5{border-top:5px solid var(--orange)}
+.story{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;margin:10px 0}
+.story .st{flex:1;min-width:110px;background:#fff;border-radius:12px;padding:10px;text-align:center;border:1px solid var(--card-b)}
+.story .st b{display:block;font-family:Georgia,serif;font-size:22px}
+.story .st span{font-size:12.5px;font-weight:700;color:var(--muted)}
+.story .ar{align-self:center;color:var(--soft);font-weight:900}
+.form-diag{display:grid;gap:6px;margin:12px 0}
+.form-row{display:grid;gap:6px}
+.form-row div{border-radius:10px;padding:8px;text-align:center;font-weight:800;font-size:13px}
+.fr-m div{background:#e3e9ff;color:var(--accent-2)}
+.fr-p div{background:#ddf4e9;color:#11704a}
+.fr-pp div{background:#fff2d9;color:#8a5600}
+table.tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:14px;margin:10px 0}
+table.tbl th,table.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.tbl th{background:#f3f5fc;font-size:13px;color:var(--muted)}
+.strong-b{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--ink);vertical-align:middle;margin-right:3px}
+.mid-b{display:inline-block;width:16px;height:16px;border-radius:50%;background:#8a91b0;vertical-align:middle;margin-right:3px}
+.weak-b{display:inline-block;width:11px;height:11px;border-radius:50%;background:#c9cee3;vertical-align:middle;margin-right:3px}
+.recipe{counter-reset:r;list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.recipe li{counter-increment:r;background:#fff;border-radius:12px;padding:10px 12px 10px 48px;position:relative;font-weight:600;border:1px solid var(--card-b)}
+.recipe li::before{content:counter(r);position:absolute;left:12px;top:10px;width:26px;height:26px;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px}
+.recipe li b{display:block}
+.lesson-foot{display:flex;justify-content:space-between;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--card-b)}
+.big-cta{background:var(--accent);color:#fff;border:0;border-radius:14px;padding:12px 18px;font-weight:900;font-size:15px;box-shadow:0 6px 16px rgba(52,84,224,.3)}
+/* 사용 설명서 */
+.manual{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}
+@media (max-width:880px){.manual{grid-template-columns:1fr}}
+.man-nav{position:sticky;top:12px}
+@media (max-width:880px){.man-nav{position:static}}
+.man-nav a{display:block;padding:7px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:700;font-size:14px}
+.man-nav a:hover{background:#fff}
+.man-hero{background:linear-gradient(135deg,#3454e0,#6a4fd6);color:#fff;border-radius:var(--r);padding:24px;box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.man-hero h3{margin:0 0 4px;font-size:24px}
+.man-hero p{margin:0;color:#e3e7ff;font-weight:600}
+.man-hero button{background:#fff;color:var(--accent-2);border:0;border-radius:14px;padding:12px 18px;font-weight:900;font-size:15px}
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+@media (max-width:760px){.steps3{grid-template-columns:1fr}}
+.step3{background:#fff;border-radius:16px;padding:16px;border:1px solid var(--card-b)}
+.step3 .n{font-size:12px;font-weight:900;color:var(--accent)}
+.step3 b{display:block;font-size:16px;margin:2px 0 4px}
+.step3 p{margin:0;font-size:13.5px;color:var(--muted);font-weight:600}
+.msec{scroll-margin-top:16px}
+.msec h4{font-size:18px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.msec h4 .tg{font-size:11px;background:var(--accent-soft);color:var(--accent-2);padding:2px 8px;border-radius:8px}
+.howto{display:grid;gap:8px}
+.howto .hw{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:10px 12px;border:1px solid var(--card-b)}
+.howto .vis{width:58px;height:50px;border-radius:12px;background:#f3f5fc;display:grid;place-items:center;font-size:20px;font-weight:900;color:var(--accent-2)}
+.howto .vis svg{width:40px;height:42px;color:var(--ink)}
+.howto .hw>div>b{display:block;font-size:14.5px}
+.howto span{font-size:13.5px;color:var(--muted);font-weight:600}
+.kbd{display:inline-block;border:1px solid #c8cde0;border-bottom-width:2px;border-radius:6px;padding:0 6px;font-size:12px;font-weight:800;background:#f6f7fb;color:var(--ink);line-height:1.6}
+details.faq{background:#fff;border-radius:12px;border:1px solid var(--card-b);padding:10px 14px;margin:6px 0}
+details.faq summary{font-weight:800;cursor:pointer}
+details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px}
+.teacher{background:#fff8e8;border:1px solid #f3dca5;border-radius:16px;padding:14px 16px}
+.teacher b{color:#8a5600}
+/* 투어 */
+.tour{position:fixed;inset:0;z-index:200;display:none}
+.tour.show{display:block}
+.tour-hole{position:fixed;border-radius:16px;box-shadow:0 0 0 9999px rgba(10,15,45,.62);transition:all .25s;pointer-events:none;outline:3px solid #fff}
+.tour-tip{position:fixed;width:min(340px,calc(100vw - 32px));background:#fff;border-radius:16px;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.3);transition:top .25s,left .25s}
+.tour-tip .tk{font-size:12px;font-weight:900;color:var(--accent)}
+.tour-tip b{display:block;font-size:17px;margin:2px 0 6px}
+.tour-tip p{margin:0 0 12px;font-size:14px;color:var(--muted);font-weight:600}
+.tour-tip .row{justify-content:space-between}
+.welcome{position:fixed;right:16px;bottom:16px;z-index:150;background:#fff;border-radius:18px;padding:16px;width:min(320px,calc(100vw - 32px));box-shadow:0 16px 40px rgba(10,15,45,.35);display:none}
+.welcome.show{display:block}
+.welcome b{font-size:16px;display:block;margin-bottom:4px}
+.welcome p{margin:0 0 12px;font-size:13.5px;color:var(--muted);font-weight:600}
+@media (max-width:880px){.lesson-nav ol{display:flex;overflow-x:auto;padding-bottom:4px}.lesson-nav li{flex:0 0 auto}.lesson-nav li button{min-width:150px}}
+@media (max-width:560px){.apptabs{width:100%}.apptabs button{flex:1;justify-content:center;padding:9px 6px;font-size:14px;white-space:nowrap}.apptabs button svg{display:none}}
 @media (max-width:760px){.paper-head{grid-template-columns:1fr}.paper-head .composer,.paper-head .meta{grid-column:1;width:100%;text-align:left}}
 </style>
 </head>
@@ -186,15 +318,21 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
       <h1><span class="logo"><svg width="26" height="30" viewBox="-2 -22 26 30" id="logoSvg"></svg></span>도레미 작곡 공책</h1>
       <p>박자와 빠르기를 정하고, 음표를 악보에 끌어다 놓아 나만의 가락을 만들어요.</p>
     </div>
-    <div class="top-actions">
-      <button class="btn-ghost" id="btnHelp">사용 방법</button>
-      <button class="btn-ghost" id="btnSample">예시 가락 보기</button>
-      <button class="btn-ghost" id="btnNew">새 악보</button>
-    </div>
+    <nav class="apptabs" aria-label="화면 고르기">
+      <button class="on" data-page="compose" id="navCompose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>작곡하기</button>
+      <button data-page="theory" id="navTheory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>작곡 이론</button>
+      <button data-page="manual" id="navManual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>사용 설명서</button>
+    </nav>
   </header>
 
+  <div class="page" id="page-compose">
+  <div class="sub-actions">
+    <button class="btn-ghost" id="btnTour">둘러보기</button>
+    <button class="btn-ghost" id="btnSample">예시 가락 보기</button>
+    <button class="btn-ghost" id="btnNew">새 악보</button>
+  </div>
   <div class="grid g-2">
-    <section class="card">
+    <section class="card" id="cardKey">
       <h2><span class="num">1</span>조 · 박자 · 마디</h2>
       <div class="keybox">
         <span class="lbl">조</span>
@@ -208,7 +346,7 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
       <div class="ms-row"><span class="lbl">마디 수</span><div id="msRow" style="display:flex;gap:8px;flex:1;flex-wrap:wrap"></div></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="cardTempo">
       <h2><span class="num">2</span>빠르기</h2>
       <div class="tempo-big"><span class="bpm" id="bpmText">♩ = 96</span><span class="term" id="termText"></span></div>
       <div class="tempo-cols" id="tempoCols"></div>
@@ -232,6 +370,14 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
           <option value="off">표시 안 함</option>
         </select>
         <label class="check"><input type="checkbox" id="chkLyrics" checked> 가사 줄</label>
+        <label class="check"><input type="checkbox" id="chkChords" checked> 화음 길잡이</label>
+        <select id="progSel" class="mini" aria-label="화음 진행 틀">
+          <option value="">화음 진행 틀 넣기…</option>
+          <option value="basic">Ⅰ–Ⅳ–Ⅴ–Ⅰ 되풀이 (기본)</option>
+          <option value="period">Ⅰ–Ⅳ–Ⅰ–Ⅴ │ Ⅰ–Ⅳ–Ⅴ–Ⅰ (반마침→온마침)</option>
+          <option value="gentle">Ⅰ–Ⅰ–Ⅳ–Ⅰ │ Ⅳ–Ⅰ–Ⅴ7–Ⅰ</option>
+          <option value="clear">화음 길잡이 모두 지우기</option>
+        </select>
       </div>
     </div>
 
@@ -261,6 +407,7 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
         <input class="composer" id="inComposer" placeholder="지은이: 6학년 ○반 ○번 이름" maxlength="40" aria-label="지은이">
       </div>
       <svg id="score" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="chord-pop" id="chordPop" role="menu"></div>
     </div>
     <p class="score-hint">위의 음표를 <b>악보로 끌어다 놓거나</b>, 음표를 한 번 누른 뒤 <b>악보를 눌러도</b> 놓여요. 놓은 음은 <b>눌러서 위아래로 끌면</b> 높이가 바뀌어요. <b>같은 길이</b> 음표를 놓인 음 위에 겹치면 화음이 돼요(3개까지). 임시표(♯·♭·♮)는 <b>음표 머리에 끌어다 놓아요</b>.</p>
     <div class="under">
@@ -270,7 +417,7 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
   </section>
 
   <div class="grid g-2b" style="margin-top:16px">
-    <section class="card">
+    <section class="card" id="cardPlay">
       <h2><span class="num">4</span>연주하기</h2>
       <div class="play-row">
         <div class="inst" id="instRow"></div>
@@ -280,6 +427,7 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
         <div class="vol">음량 <input type="range" id="volSl" min="0" max="100" value="80" aria-label="음량"></div>
       </div>
       <div class="opts">
+        <label class="check"><input type="checkbox" id="optAcc" checked> 화음 반주</label>
         <label class="check"><input type="checkbox" id="optDrum"> 드럼 반주</label>
         <label class="check"><input type="checkbox" id="optMetro"> 메트로놈</label>
         <label class="check"><input type="checkbox" id="optCount"> 예비박 (한 마디)</label>
@@ -289,7 +437,7 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
       <p class="hint" id="playHint">음표를 하나 고른 뒤 ‘여기부터 듣기’를 누르면 그 마디부터 들을 수 있어요. (스페이스바: 재생/정지)</p>
     </section>
 
-    <section class="card">
+    <section class="card" id="cardSave">
       <h2><span class="num">5</span>저장하기 · 스스로 점검</h2>
       <div class="save-grid">
         <button class="save-btn primary" id="btnMidi"><span class="ic" style="background:var(--accent)">♪</span><span>MIDI 파일 저장<small>.mid · 음악 프로그램에서 열기</small></span></button>
@@ -304,29 +452,159 @@ footer{color:#aab3e6;font-size:12px;text-align:center;margin-top:18px}
       <p class="hint">작업한 내용은 이 브라우저에 자동으로 저장돼요. 다른 컴퓨터에서 이어 하려면 ‘작품 파일 저장’을 해 두세요.</p>
     </section>
   </div>
+  </div>
+
+  <div class="page" id="page-theory" hidden>
+    <div class="theory">
+      <aside class="card lesson-nav">
+        <div class="lbl">예시를 보여줄 조</div>
+        <select class="big" id="thKey" style="width:100%;margin-top:6px" aria-label="예시 조"></select>
+        <ol id="lessonList"></ol>
+      </aside>
+      <article class="card lesson" id="lessonBox"></article>
+    </div>
+  </div>
+
+  <div class="page" id="page-manual" hidden>
+    <div class="manual">
+      <nav class="card man-nav" aria-label="설명서 차례">
+        <div class="lbl" style="padding:0 10px 6px">차례</div>
+        <a href="#m-start">처음 시작하기</a>
+        <a href="#m-place">음표·쉼표 놓기</a>
+        <a href="#m-edit">고치기</a>
+        <a href="#m-acc">임시표 ♯ ♭ ♮</a>
+        <a href="#m-chord">화음 길잡이와 반주</a>
+        <a href="#m-lyric">가사·계이름</a>
+        <a href="#m-play">듣기</a>
+        <a href="#m-save">저장·제출</a>
+        <a href="#m-keys">단축키</a>
+        <a href="#m-faq">자주 묻는 질문</a>
+        <a href="#m-teacher">선생님께</a>
+      </nav>
+      <div style="display:grid;gap:16px;min-width:0">
+        <div class="man-hero">
+          <div><h3>도레미 작곡 공책 사용 설명서</h3><p>세 단계면 나만의 가락이 완성돼요. 처음이라면 둘러보기부터!</p></div>
+          <button id="manTour">▶ 따라 하며 둘러보기</button>
+        </div>
+
+        <section class="card msec" id="m-start">
+          <h4>처음 시작하기</h4>
+          <div class="steps3">
+            <div class="step3"><span class="n">STEP 1</span><b>정하기</b><p>조, 박자, 마디 수, 빠르기를 골라요. 잘 모르겠으면 다장조 · 4/4박자 · 8마디로 시작해요.</p></div>
+            <div class="step3"><span class="n">STEP 2</span><b>놓기</b><p>음표를 악보로 끌어다 놓아요. 마디 아래 막대가 초록색이 될 때까지 채워요.</p></div>
+            <div class="step3"><span class="n">STEP 3</span><b>듣고 저장하기</b><p>재생해서 들어 보고 고친 뒤, MIDI 파일이나 악보 그림으로 저장해 제출해요.</p></div>
+          </div>
+          <div class="idea green">💡 무엇부터 쓸지 막막하면 <b>작곡 이론 → 8. 작곡 순서</b>를 따라 해 보세요. 화음 진행 틀을 먼저 넣고 시작하면 훨씬 쉬워요.</div>
+        </section>
+
+        <section class="card msec" id="m-place">
+          <h4>음표·쉼표 놓기</h4>
+          <div class="howto">
+            <div class="hw"><span class="vis" data-icon="n4"></span><div><b>끌어다 놓기</b><span>음표를 꾹 누른 채 악보로 가져가요. 파란 세로선이 들어갈 자리, 말풍선이 음 이름이에요. 손을 떼면 놓여요.</span></div></div>
+            <div class="hw"><span class="vis" data-icon="n2"></span><div><b>눌러서 연속 놓기</b><span>음표를 한 번 누르면 파랗게 바뀌어요. 그다음 악보를 누를 때마다 같은 음표가 계속 놓여요. 그만하려면 <span class="kbd">Esc</span> 또는 음표를 한 번 더 눌러요.</span></div></div>
+            <div class="hw"><span class="vis" data-icon="r4"></span><div><b>쉼표</b><span>팔레트 위의 <b>쉼표</b> 탭을 눌러 같은 방법으로 놓아요.</span></div></div>
+            <div class="hw"><span class="vis">♫</span><div><b>화음(겹음) 만들기</b><span>이미 놓인 음표와 <b>같은 길이</b>의 음표를 그 음표 바로 위·아래에 놓으면 겹쳐져요. 3개까지 쌓을 수 있어요.</span></div></div>
+            <div class="hw"><span class="vis" style="color:var(--red)">!</span><div><b>“자리 부족”이 뜰 때</b><span>그 마디에 남은 박보다 긴 음표예요. 더 짧은 음표를 쓰거나 다음 마디에 놓아요.</span></div></div>
+          </div>
+        </section>
+
+        <section class="card msec" id="m-edit">
+          <h4>고치기</h4>
+          <div class="howto">
+            <div class="hw"><span class="vis">↕</span><div><b>음 높이 바꾸기</b><span>음표를 누른 채 위아래로 끌어요. 또는 음표를 고르고 <span class="kbd">↑</span> <span class="kbd">↓</span> 키를 눌러요.</span></div></div>
+            <div class="hw"><span class="vis">⇆</span><div><b>다른 음 고르기</b><span><span class="kbd">←</span> <span class="kbd">→</span> 키로 옆 음표로 옮겨 가요.</span></div></div>
+            <div class="hw"><span class="vis">⏱</span><div><b>길이 바꾸기</b><span>음표를 고르면 위에 편집 줄이 나와요. ‘길이’에서 바꿔요.</span></div></div>
+            <div class="hw"><span class="vis">⌫</span><div><b>지우기 · 되돌리기</b><span><span class="kbd">Delete</span>로 지우고, 실수하면 <span class="kbd">Ctrl</span>+<span class="kbd">Z</span>(되돌리기)를 눌러요.</span></div></div>
+            <div class="hw"><span class="vis">⧉</span><div><b>마디 복사·붙여넣기</b><span>마디의 빈 곳을 누르면 마디가 골라져요. ‘마디 복사’ 뒤 다른 마디를 골라 ‘여기에 붙여넣기’를 누르면 반복 가락을 쉽게 만들 수 있어요.</span></div></div>
+          </div>
+        </section>
+
+        <section class="card msec" id="m-acc">
+          <h4>임시표 ♯ ♭ ♮</h4>
+          <div class="howto">
+            <div class="hw"><span class="vis" data-icon="sharp"></span><div><b>올림표 ♯</b><span>반음 올려요.</span></div></div>
+            <div class="hw"><span class="vis" data-icon="flat"></span><div><b>내림표 ♭</b><span>반음 내려요.</span></div></div>
+            <div class="hw"><span class="vis" data-icon="natural"></span><div><b>제자리표 ♮</b><span>조표나 앞의 임시표를 없애고 원래 음으로 돌려요.</span></div></div>
+          </div>
+          <p class="hint" style="font-size:14px">붙이는 방법: 임시표를 <b>음표 머리에 끌어다 놓기</b> · 음표를 고르고 편집 줄 버튼 누르기 · 키보드 <span class="kbd">#</span> <span class="kbd">B</span> <span class="kbd">N</span> (빼기 <span class="kbd">0</span>)</p>
+          <div class="idea amber">임시표는 <b>그 마디 안에서만</b>, 그리고 <b>같은 자리(같은 높이)의 음</b>에 계속 효과가 있어요. 다음 마디로 넘어가면 사라져요.</div>
+        </section>
+
+        <section class="card msec" id="m-chord">
+          <h4>화음 길잡이와 반주 <span class="tg">NEW</span></h4>
+          <div class="howto">
+            <div class="hw"><span class="vis" style="font-family:Georgia,serif">Ⅰ</span><div><b>마디 위 ‘화음’ 칸</b><span>마디 위의 작은 칸을 누르면 Ⅰ·Ⅳ·Ⅴ·Ⅴ7 중에서 그 마디의 화음을 고를 수 있어요.</span></div></div>
+            <div class="hw"><span class="vis">✓</span><div><b>어울림 표시</b><span>마디 첫 박의 음이 화음 구성음이면 칸이 <b style="color:var(--green)">초록색</b>, 아니면 <b style="color:var(--amber)">주황색</b>이 돼요.</span></div></div>
+            <div class="hw"><span class="vis">▤</span><div><b>화음 진행 틀</b><span>악보 위 ‘화음 진행 틀 넣기’에서 고르면 모든 마디에 화음이 한 번에 들어가요.</span></div></div>
+            <div class="hw"><span class="vis">♪</span><div><b>화음 반주</b><span>‘연주하기’에서 화음 반주를 켜면 가락과 함께 피아노 반주가 나와요. MIDI 파일에도 반주 트랙으로 저장돼요.</span></div></div>
+          </div>
+        </section>
+
+        <section class="card msec" id="m-lyric">
+          <h4>가사·계이름</h4>
+          <p>음표를 고르고 편집 줄의 <b>가사</b> 칸에 한 글자를 적어요. <span class="kbd">Enter</span>를 누르면 다음 음으로 넘어가서 계속 적을 수 있어요.</p>
+          <p>‘음 이름 표시’에서 <b>계이름</b>(조에 따라 ‘도’가 옮겨 가는 이름)이나 <b>음이름</b>(다라마·CDE)을 음표 아래에 보이게 할 수 있어요.</p>
+        </section>
+
+        <section class="card msec" id="m-play">
+          <h4>듣기</h4>
+          <p>악기(피아노·리코더·실로폰·바이올린·오르간)를 고르고 <b>재생</b>을 눌러요. <span class="kbd">Space</span>로도 재생·정지할 수 있어요.</p>
+          <p>화음 반주·드럼 반주·메트로놈·예비박·반복 재생을 켤 수 있어요. 음표를 고른 뒤 ‘여기부터 듣기’를 누르면 그 마디부터 들려요.</p>
+        </section>
+
+        <section class="card msec" id="m-save">
+          <h4>저장·제출</h4>
+          <table class="tbl">
+            <tr><th>버튼</th><th>무엇이 저장되나요?</th><th>언제 쓰나요?</th></tr>
+            <tr><td><b>MIDI 파일</b></td><td>.mid 음악 파일 (가락, 켜 둔 반주)</td><td>음악 프로그램에서 열거나 소리로 제출할 때</td></tr>
+            <tr><td><b>악보 그림</b></td><td>.png 그림</td><td>클래스룸·패들렛 등에 올릴 때</td></tr>
+            <tr><td><b>인쇄 / PDF</b></td><td>종이 또는 PDF</td><td>악보를 출력해 낼 때</td></tr>
+            <tr><td><b>작품 파일</b></td><td>.json (다시 고칠 수 있는 파일)</td><td>다음 시간에 이어서 할 때 꼭!</td></tr>
+          </table>
+          <div class="idea">작업 내용은 이 브라우저에 자동 저장돼요. 하지만 다른 컴퓨터를 쓰거나 기록을 지우면 사라지니, 수업이 끝날 때 <b>작품 파일 저장</b>을 해 두세요.</div>
+        </section>
+
+        <section class="card msec" id="m-keys">
+          <h4>단축키</h4>
+          <table class="tbl">
+            <tr><th>키</th><th>하는 일</th></tr>
+            <tr><td><span class="kbd">Space</span></td><td>재생 / 정지</td></tr>
+            <tr><td><span class="kbd">↑</span> <span class="kbd">↓</span></td><td>고른 음 높이 바꾸기</td></tr>
+            <tr><td><span class="kbd">←</span> <span class="kbd">→</span></td><td>옆 음표 고르기</td></tr>
+            <tr><td><span class="kbd">Delete</span></td><td>고른 음 지우기</td></tr>
+            <tr><td><span class="kbd">#</span> <span class="kbd">B</span> <span class="kbd">N</span> <span class="kbd">0</span></td><td>올림표 / 내림표 / 제자리표 / 임시표 빼기</td></tr>
+            <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">Z</span> · <span class="kbd">Ctrl</span>+<span class="kbd">Y</span></td><td>되돌리기 · 다시하기</td></tr>
+            <tr><td><span class="kbd">Esc</span></td><td>연속 놓기 그만 · 선택 풀기</td></tr>
+          </table>
+        </section>
+
+        <section class="card msec" id="m-faq">
+          <h4>자주 묻는 질문</h4>
+          <details class="faq"><summary>소리가 안 나요.</summary><p>컴퓨터·태블릿 음량과 화면의 ‘음량’ 막대를 확인해요. 아이패드는 옆의 무음 스위치가 켜져 있으면 소리가 안 날 수 있어요. 그래도 안 되면 화면을 한 번 누른 뒤 다시 재생해요.</p></details>
+          <details class="faq"><summary>박이 안 맞는다고 나와요.</summary><p>마디 아래 막대에 ‘○박 남음’이라고 적힌 만큼 음표나 쉼표를 더 넣어요. 빨간색이면 너무 많이 넣은 거예요.</p></details>
+          <details class="faq"><summary>조를 바꿨더니 음이 움직였어요.</summary><p>‘조를 바꾸면 이미 쓴 가락도 함께 옮기기’가 켜져 있으면 가락이 새 조로 옮겨져요(조옮김). 음표 자리를 그대로 두려면 체크를 끄고 바꿔요. 실수했다면 되돌리기를 눌러요.</p></details>
+          <details class="faq"><summary>다른 컴퓨터에서 이어서 하고 싶어요.</summary><p>‘작품 파일 저장’으로 .json 파일을 받아 두었다가, 다른 컴퓨터에서 ‘작품 불러오기’로 열어요.</p></details>
+          <details class="faq"><summary>MIDI 파일은 어디서 열어요?</summary><p>MuseScore 같은 악보 프로그램이나 MIDI를 지원하는 음악 앱에서 열 수 있어요. 컴퓨터의 기본 음악 프로그램으로 바로 들을 수 있는 경우도 있어요.</p></details>
+        </section>
+
+        <section class="teacher msec" id="m-teacher">
+          <h4 style="margin:0 0 8px">선생님께</h4>
+          <p style="margin:4px 0">• <b>수행평가 제출</b>: 악보 그림(.png)과 MIDI(.mid)를 함께 받으면 악보와 소리를 모두 확인할 수 있어요. 고쳐 쓰기를 하려면 작품 파일(.json)도 받아 두세요.</p>
+          <p style="margin:4px 0">• <b>스스로 점검</b> 목록(기본 5개 + 도전 항목)을 채점 기준표와 연결해 쓸 수 있어요.</p>
+          <p style="margin:4px 0">• 학생 작품은 각자의 브라우저에만 저장되고 어디로도 전송되지 않아요.</p>
+        </section>
+      </div>
+    </div>
+
+  </div>
   <footer>악보 기호: Bravura 글꼴(SIL Open Font License 1.1, © Steinberg Media Technologies GmbH)에서 가져온 모양을 사용했어요.</footer>
 </div>
 
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
-<dialog id="helpDlg">
-  <div class="dlg">
-    <button class="mini close" id="helpClose">닫기</button>
-    <h3>도레미 작곡 공책 사용 방법</h3>
-    <ol>
-      <li><b>조·박자·마디</b>를 먼저 정해요. 조를 바꾸면 조표가 바뀌고, 이미 쓴 가락도 새 조로 옮겨져요(체크를 끄면 음표 자리는 그대로).</li>
-      <li><b>음표/쉼표</b>를 악보로 끌어다 놓아요. 놓는 높이에 따라 음 높이가 정해져요. 음표를 한 번 눌러 고르면 악보를 누를 때마다 계속 놓을 수 있어요(그만하려면 <span class="kbd">Esc</span>).</li>
-      <li>놓은 음을 누르면 선택돼요. <b>위아래로 끌거나</b> <span class="kbd">↑</span><span class="kbd">↓</span> 키로 높이를 바꾸고, <span class="kbd">←</span><span class="kbd">→</span>로 옆 음을 골라요. <span class="kbd">Delete</span>로 지워요.</li>
-      <li><b>임시표</b>: ♯(올림표)·♭(내림표)·♮(제자리표)를 음표 머리에 끌어다 놓거나, 음을 고른 뒤 편집 줄의 버튼을 눌러요. 임시표는 <b>그 마디 안에서 같은 자리의 음</b>에 계속 적용돼요.</li>
-      <li>마디 아래 막대가 <b style="color:var(--green)">초록색</b>이면 박이 꼭 맞은 거예요. 남은 박이 아래에 적혀요.</li>
-      <li><b>화음</b>: 같은 길이의 음표를 이미 놓인 음표 위(같은 세로줄)에 놓으면 겹쳐져요(3개까지).</li>
-      <li><b>가사</b>: 음을 고르고 편집 줄의 ‘가사’ 칸에 한 글자씩 적어요. <span class="kbd">Enter</span>를 누르면 다음 음으로 넘어가요.</li>
-      <li>다 만들면 <b>재생</b>해 보고, <b>MIDI 파일</b>·<b>악보 그림</b>으로 저장해 제출해요.</li>
-    </ol>
-    <p class="hint">단축키: <span class="kbd">Space</span> 재생/정지 · <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> 되돌리기 · <span class="kbd">Ctrl</span>+<span class="kbd">Y</span> 다시하기 · <span class="kbd">#</span> 올림표 · <span class="kbd">B</span> 내림표 · <span class="kbd">N</span> 제자리표 · <span class="kbd">0</span> 임시표 빼기</p>
-  </div>
-</dialog>
+<div class="tour" id="tour"><div class="tour-hole" id="tourHole"></div><div class="tour-tip" id="tourTip"></div></div>
+<div class="welcome" id="welcome"><b>처음 오셨나요? 👋</b><p>30초 둘러보기로 화면 구성을 먼저 살펴봐요.</p><div class="row"><button class="pbtn" id="wcGo">둘러보기 시작</button><button class="mini" id="wcNo">괜찮아요</button></div></div>
 
 <script>
 "use strict";
@@ -370,6 +648,12 @@ const INSTRUMENTS = [
   { id:'organ', name:'오르간', prog:16 },
 ];
 
+/* 화음 길잡이 기호 */
+const CHORD_SYMS = ['I', 'IV', 'V', 'V7'];
+const CHORD_DEGS = { I:[0,2,4], IV:[3,5,0], V:[4,6,1], V7:[4,6,1,3] };
+const CHORD_RN = { I:'Ⅰ', IV:'Ⅳ', V:'Ⅴ', V7:'Ⅴ7' };
+const CHORD_ROLE = { I:'으뜸화음', IV:'버금딸림화음', V:'딸림화음', V7:'딸림7화음' };
+
 /* ================= 조 ================= */
 function keyAcc(fifths, letter){
   if (fifths > 0) return SHARP_ORDER.slice(0, fifths).includes(letter) ? 1 : 0;
@@ -395,7 +679,7 @@ KEY_ORDER.forEach(f => { const a = makeKey(f,'major'), b = makeKey(f,'minor'); K
 
 /* ================= 문서 상태 ================= */
 function newDoc(){
-  return { v:1, title:'', composer:'', key:'M0', ts:[4,4], tempo:96, instrument:'piano', measures: Array.from({length:8}, () => []) };
+  return { v:1, title:'', composer:'', key:'M0', ts:[4,4], tempo:96, instrument:'piano', measures: Array.from({length:8}, () => []), chords: Array(8).fill(null) };
 }
 const LS_KEY = 'doremi-composer-v1';
 function loadLocal(){
@@ -425,6 +709,7 @@ function sanitizeDoc(d){
     lyric: String(ev.lyric || '').slice(0, 6),
   })).filter(ev => ev.rest || ev.notes.length));
   if (!out.measures.length) out.measures = [[]];
+  out.chords = out.measures.map((_, i) => d.chords && CHORD_SYMS.includes(d.chords[i]) ? d.chords[i] : null);
   return out;
 }
 
@@ -433,7 +718,7 @@ let sel = null;            // {m, e, p}  e === -1 → 마디만 선택
 let tool = null;           // {kind:'note'|'rest'|'acc', dur, acc}
 let paletteTab = 'note';
 let undoStack = [], redoStack = [];
-let view = { label:'solfa', lyrics:true };
+let view = { label:'solfa', lyrics:true, chords:true };
 let layout = null;
 let clipboard = null;
 
@@ -576,7 +861,7 @@ function measureMetrics(mi){
 }
 
 function computeLayout(W, mode){
-  const exp = mode === 'export';
+  const exp = mode !== 'screen';
   const key = curKey();
   const ks = Math.abs(key.fifths);
   const clefW = 40, ksW = ks ? ks * 9.2 + 6 : 0, tsW = doc.ts[0] >= 10 ? 44 : 30;
@@ -597,11 +882,11 @@ function computeLayout(W, mode){
 
   const showLabel = view.label !== 'off';
   const measures = [], systems = [];
-  let y = exp ? 112 : 30;
+  let y = mode === 'export' ? 112 : mode === 'mini' ? 0 : 30;
   lines.forEach((chunk, li) => {
     const first = li === 0;
     const sys = { top: y, measures: chunk, first };
-    sys.staffTop = y + 52;
+    sys.staffTop = y + 52 + (view.chords && (mode === 'screen' || doc.chords.some(c => c)) ? 16 : 0);
     let cur = sys.staffTop + 40 + 32;
     const chordMax = Math.max(1, ...chunk.flatMap(i => doc.measures[i].map(ev => ev.notes.length)));
     if (view.lyrics) { sys.lyricY = cur + 10; cur += 22; }
@@ -649,11 +934,11 @@ function beamGroups(evs){
 }
 
 function drawScore(L, mode){
-  const exp = mode === 'export';
+  const exp = mode !== 'screen';
   const key = curKey();
   const out = [];
   const T = (x, y, s, attrs='') => `<text x="${r1(x)}" y="${r1(y)}"${attrs}>${esc(s)}</text>`;
-  if (exp) {
+  if (mode === 'export') {
     out.push(`<rect x="0" y="0" width="${L.W}" height="${L.H}" fill="#fff"/>`);
     out.push(T(L.W/2, 46, doc.title || '제목 없음', ` text-anchor="middle" font-size="26" font-weight="800" fill="#1b2140"`));
     out.push(T(L.W - 12, 84, doc.composer || '', ` text-anchor="end" font-size="15" fill="#1b2140"`));
@@ -680,7 +965,7 @@ function drawScore(L, mode){
     }
     out.push(`</g>`);
     // 빠르기 표시
-    if (si === 0) {
+    if (si === 0 && mode !== 'mini') {
       const tx = sys.x0 + 4, ty = st - 26;
       out.push(`<g fill="#1b2140">${useG('hBlack', tx, ty)}<line x1="${r1(tx + HW.hBlack - 0.7)}" x2="${r1(tx + HW.hBlack - 0.7)}" y1="${ty - 2}" y2="${ty - 30}" stroke="#1b2140" stroke-width="1.3"/></g>`);
       out.push(T(tx + 16, ty + 4, `= ${doc.tempo}` + (exp ? `  ${tempoTermOf(doc.tempo).map(t => t.t).join(' / ')}` : ''), ` font-size="14" font-weight="700" fill="#1b2140"`));
@@ -697,6 +982,8 @@ function drawMeasure(M, out, exp, sys){
   const isLast = mi === doc.measures.length - 1;
   // 선택된 마디 바탕
   if (!exp && sel && sel.m === mi && sel.e === -1) out.push(`<rect x="${r1(M.x0 + 2)}" y="${st - 22}" width="${r1(M.x1 - M.x0 - 4)}" height="84" rx="8" fill="#e3e9ff"/>`);
+  // 화음 길잡이
+  if (view.chords) drawChordChip(M, out, exp);
   // 마디 번호
   out.push(`<text x="${r1(M.x0 + 3)}" y="${st - 8}" font-size="10.5" font-weight="700" fill="#8a91b0">${mi + 1}</text>`);
   // 세로줄
@@ -864,7 +1151,13 @@ function renderScore(){
   scoreEl.innerHTML = drawScore(layout, 'screen') + `<g id="ghost" pointer-events="none"></g>`;
   scoreEl.classList.toggle('tooling', !!tool);
 }
+function syncChords(){
+  if (!Array.isArray(doc.chords)) doc.chords = [];
+  while (doc.chords.length < doc.measures.length) doc.chords.push(null);
+  doc.chords.length = doc.measures.length;
+}
 function refreshAll(){
+  syncChords();
   renderScore();
   renderSettings();
   renderEditPanel();
@@ -1329,6 +1622,8 @@ scoreEl.addEventListener('pointerdown', e => {
   if (!layout) return;
   ensureAudio();
   const p = svgPoint(e);
+  const chip = e.target.closest('.cchip');
+  if (chip) { e.preventDefault(); openChordPop(+chip.dataset.cm, chip); return; }
   const hit = e.target.closest('.hit');
   if (tool) {
     noteDrag = { mode:'tool', x0: e.clientX, y0: e.clientY, id: e.pointerId };
@@ -1386,8 +1681,9 @@ document.addEventListener('keydown', e => {
   }
   if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.target.closest && e.target.closest('.pal')) return;
+  if (currentPage !== 'compose') { if (e.key === 'Escape' && tour.on) endTour(); return; }
   switch (e.key) {
-    case 'Escape': if (tool) { tool = null; renderPalette(); drawGhost(null, null); scoreEl.classList.remove('tooling'); } else if (sel) { sel = null; refreshAll(); } break;
+    case 'Escape': if ($('chordPop').classList.contains('show')) { closeChordPop(); break; } if (tour.on) { endTour(); break; } if (tool) { tool = null; renderPalette(); drawGhost(null, null); scoreEl.classList.remove('tooling'); } else if (sel) { sel = null; refreshAll(); } break;
     case ' ': e.preventDefault(); togglePlay(); break;
     case 'ArrowUp': if (sel && sel.e >= 0) { e.preventDefault(); shiftPitch(1); } break;
     case 'ArrowDown': if (sel && sel.e >= 0) { e.preventDefault(); shiftPitch(-1); } break;
@@ -1548,6 +1844,7 @@ function buildQueue(fromM, countIn){
       t += ev.dur;
     });
     if ($('optDrum').checked) drumPattern().forEach(h => q.push({ tick: base + h.t, kind:'drum', type: h.type, vel: h.vel }));
+    if ($('optAcc').checked) accompHits(mi).forEach(h => q.push({ tick: base + h.t, kind:'acc', midis: h.midis, dur: h.dur, vel: h.vel }));
     if ($('optMetro').checked) for (let b = 0; b < bi.count; b++) q.push({ tick: base + b * bi.len, kind:'click', hi: b === 0 });
   }
   q.sort((a, b) => a.tick - b.tick);
@@ -1576,6 +1873,7 @@ function schedule(){
     if (t > ahead) break;
     if (it.kind === 'ev') it.midis.forEach(m => playVoice(doc.instrument, m, t, it.dur * player.spb * (doc.instrument === 'recorder' ? 0.9 : 0.95), it.vel, player.bus));
     else if (it.kind === 'drum') drumHit(it.type, t, it.vel * 0.8, player.bus);
+    else if (it.kind === 'acc') it.midis.forEach(m => playVoice('piano', m, t, it.dur * player.spb * 0.92, it.vel, player.bus));
     else if (it.kind === 'click') drumHit(it.hi ? 'clickHi' : 'click', t, 1, player.bus);
     player.i++;
   }
@@ -1680,6 +1978,14 @@ function buildMidi(){
     });
   }
   const tracks = [trackChunk(t0), trackChunk(t1)];
+  if ($('optAcc').checked && doc.chords.some(c => c)) {
+    const t3 = [{ t:0, o:0, d: metaText(0x03, 'Chords (piano)') }, { t:0, o:1, d:[0xc1, 0] }];
+    for (let mi = 0; mi <= last; mi++) accompHits(mi).forEach(h => {
+      const st = (mi * cap + h.t) * T16;
+      h.midis.forEach(m => { t3.push({ t:st, o:2, d:[0x91, m, Math.round(h.vel * 110)] }); t3.push({ t:st + h.dur * T16 - 10, o:0, d:[0x81, m, 0] }); });
+    });
+    tracks.push(trackChunk(t3));
+  }
   if ($('optDrum').checked) {
     const t2 = [{ t:0, o:0, d: metaText(0x03, 'Drums') }];
     const map = { kick:36, snare:38, hat:42 };
@@ -1761,6 +2067,8 @@ function renderChecks(){
   const hasAcc = allNotes.some(e => e.notes.some(n => n.acc));
   const hasChord = allNotes.some(e => e.notes.length > 1);
   const lyricCount = allNotes.filter(e => e.lyric).length;
+  const chordUse = { total:0, fit:0, lastI: lastI >= 0 && doc.chords[lastI] === 'I' };
+  doc.measures.forEach((m, i) => { const f = chordFit(i); if (f !== null) { chordUse.total++; if (f) chordUse.fit++; } });
   const items = [
     { ok: !!doc.title.trim() && !!doc.composer.trim(), t:'제목과 지은이를 적었어요', s: '악보 위쪽 칸에 적어요' },
     { ok: filled === doc.measures.length && doc.measures.length > 0, t:`모든 마디의 박이 꼭 맞아요 (${filled}/${doc.measures.length}마디)`, s: '마디 아래 막대가 모두 초록색이면 돼요' },
@@ -1769,6 +2077,8 @@ function renderChecks(){
     { ok: endsTonic, t:`으뜸음(${key.tonicKo})으로 끝났어요`, s: `마지막 음(화음이면 맨 아래 음)이 ${key.tonicKo}(${key.tonicEn})이면 돼요` },
     { ok: hasAcc, t:'임시표(♯·♭·♮)를 써 봤어요', s: '음표 머리에 임시표를 끌어다 놓아요', extra:true },
     { ok: hasChord, t:'화음을 만들어 봤어요', s: '같은 길이 음표를 겹쳐 놓아요', extra:true },
+    { ok: chordUse.lastI, t:'화음 길잡이를 정하고 끝 마디를 Ⅰ로 했어요', s: '‘화음 진행 틀 넣기’를 써 보아요', extra:true },
+    { ok: chordUse.total >= 4 && chordUse.fit === chordUse.total, t:`마디 첫 음이 화음과 어울려요 (${chordUse.fit}/${chordUse.total}마디)`, s: '화음 칸이 모두 초록색이면 돼요', extra:true },
     { ok: lyricCount >= 4, t:`가사를 붙였어요 (${lyricCount}글자)`, s: '음을 고르고 ‘가사’ 칸에 적어요', extra:true },
   ];
   $('checks').innerHTML = items.map(it => `<li class="${it.ok ? 'ok' : ''}"><span class="mk">${it.ok ? '✓' : ''}</span><span>${it.t}${it.extra ? '<span class="tag">도전</span>' : ''}<small>${it.s}</small></span></li>`).join('');
@@ -1786,8 +2096,6 @@ $('btnRedo').onclick = redo;
 $('btnDel').onclick = deleteSel;
 $('btnClear').onclick = () => { if (!hasNotes()) return; if (!confirm('악보의 음표를 모두 지울까요? (되돌리기로 다시 살릴 수 있어요)')) return; pushUndo(); doc.measures = doc.measures.map(() => []); sel = null; refreshAll(); };
 $('btnNew').onclick = () => { if (hasNotes() && !confirm('새 악보를 시작할까요? 지금 악보는 되돌리기로 다시 살릴 수 있어요.')) return; stopPlayback(); pushUndo(); doc = newDoc(); sel = null; refreshAll(); };
-$('btnHelp').onclick = () => $('helpDlg').showModal();
-$('helpClose').onclick = () => $('helpDlg').close();
 $('btnSample').onclick = () => {
   if (hasNotes() && !confirm('예시 가락(작은 별)을 불러올까요? 지금 악보는 되돌리기로 다시 살릴 수 있어요.')) return;
   stopPlayback(); pushUndo();
@@ -1796,15 +2104,423 @@ $('btnSample').onclick = () => {
   doc = { ...newDoc(), title:'작은 별 (예시)', composer:'프랑스 민요', tempo:100, measures:[
     [q(28,'반'), q(28,'짝'), q(32,'반'), q(32,'짝')], [q(33,'작'), q(33,'은'), h(32,'별')],
     [q(31,'아'), q(31,'름'), q(30,'답'), q(30,'게')], [q(29,'비'), q(29,'치'), h(28,'네')],
-    [], [], [], [] ] };
+    [], [], [], [] ], chords:['I','IV','IV','V',null,null,null,null] };
   sel = null; refreshAll(); toast('예시 가락을 불러왔어요. 재생해 보고 5마디부터 이어서 만들어 봐요!');
 };
+
+/* ================= 화음 길잡이 ================= */
+// 화음 구성음: [{l: 글자(0~6), a: 변화(+1 = ♯)}]. 단조의 Ⅴ·Ⅴ7은 이끎음(7음)을 반음 올림(화성 단음계)
+function chordTones(sym, key){
+  const k = key || curKey();
+  return CHORD_DEGS[sym].map(d => {
+    const l = (k.tonicL + d) % 7;
+    let a = keyAcc(k.fifths, l);
+    if (k.mode === 'minor' && (sym === 'V' || sym === 'V7') && d === 6) a += 1;
+    return { l, a, d };
+  });
+}
+const pcOf = (l, a) => ((SEMI[l] + a) % 12 + 12) % 12;
+function chordName(sym, key){
+  const k = key || curKey(); const t = chordTones(sym, k)[0];
+  const minor = k.mode === 'minor' && (sym === 'I' || sym === 'IV');
+  return LET[t.l] + accText(t.a) + (minor ? 'm' : '') + (sym === 'V7' ? '7' : '');
+}
+function chordSolfa(sym, key){
+  const k = key || curKey();
+  return chordTones(sym, k).map(t => SOLFA[(t.l - k.doL + 7) % 7] + accText(t.a - keyAcc(k.fifths, t.l))).join('·');
+}
+function chordMidis(sym){
+  const ts = chordTones(sym);
+  const upper = ts.map(t => { let m = 60 + SEMI[t.l] + t.a; while (m > 66) m -= 12; while (m < 54) m += 12; return m; }).sort((a, b) => a - b);
+  let bass = 48 + SEMI[ts[0].l] + ts[0].a; while (bass > 52) bass -= 12; while (bass < 41) bass += 12;
+  return { bass, upper };
+}
+// 마디 첫 박 음이 화음 구성음인가? (true / false / null = 판단할 음 없음)
+function chordFit(mi){
+  const c = doc.chords && doc.chords[mi]; const ev = doc.measures[mi][0];
+  if (!c || !ev || ev.rest) return null;
+  const pcs = chordTones(c).map(t => pcOf(t.l, t.a));
+  const al = measureAlters(mi)[0];
+  return ev.notes.every((n, k) => pcs.includes(pcOf(n.step % 7, al[k])));
+}
+function accompHits(mi){
+  const c = doc.chords[mi]; if (!c) return [];
+  const { bass, upper } = chordMidis(c); const bi = beatInfo(); const hits = [];
+  for (let b = 0; b < bi.count; b++) hits.push({ t: b * bi.len, dur: bi.len, midis: b === 0 ? [bass, ...upper] : upper, vel: b === 0 ? 0.42 : 0.26 });
+  return hits;
+}
+function drawChordChip(M, out, exp){
+  const mi = M.mi, c = doc.chords && doc.chords[mi], st = M.staffTop;
+  const x = M.inner0 - 2, y = st - 50;
+  if (exp) {
+    if (c) out.push(`<text x="${r1(x)}" y="${y + 14}" font-size="15" font-weight="800" font-family="Georgia, serif" fill="#1b2140">${CHORD_RN[c]}<tspan font-size="11" font-weight="700" font-family="sans-serif" fill="#5d6588" dx="4">${chordName(c)}</tspan></text>`);
+    return;
+  }
+  if (!c) { out.push(`<g class="cchip" data-cm="${mi}"><rect x="${r1(x)}" y="${y}" width="58" height="20" rx="7" fill="#f4f6fd" stroke="#c9d0ec" stroke-dasharray="3 2"/><text x="${r1(x + 29)}" y="${y + 14}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a91b0">＋ 화음</text></g>`); return; }
+  const fit = chordFit(mi);
+  const fill = fit === true ? '#ddf4e9' : fit === false ? '#fff2d9' : '#eef1fb';
+  const stroke = fit === true ? '#1d9a62' : fit === false ? '#d98a0b' : '#b9c2e6';
+  const nm = chordName(c), w = 40 + textW(nm, 11) + (fit !== null ? 14 : 0);
+  out.push(`<g class="cchip" data-cm="${mi}"><title>${CHORD_ROLE[c]} (${chordSolfa(c)})${fit === false ? ' — 첫 박 음이 화음 구성음이 아니에요' : ''}</title><rect x="${r1(x)}" y="${y}" width="${r1(w)}" height="20" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="1.3"/><text x="${r1(x + 7)}" y="${y + 15}" font-size="14" font-weight="800" font-family="Georgia, serif" fill="#1b2140">${CHORD_RN[c]}</text><text x="${r1(x + 34)}" y="${y + 14}" font-size="11" font-weight="700" fill="#5d6588">${esc(nm)}</text>${fit !== null ? `<text x="${r1(x + w - 9)}" y="${y + 14}" text-anchor="middle" font-size="11" font-weight="900" fill="${stroke}">${fit ? '✓' : '!'}</text>` : ''}</g>`);
+}
+let popMi = -1;
+function openChordPop(mi, chipEl){
+  const pop = $('chordPop'); popMi = mi;
+  const cur = doc.chords[mi];
+  pop.innerHTML = `<div class="ttl">${mi + 1}마디 화음 고르기</div>` + CHORD_SYMS.map(c => `<button data-ch="${c}" class="${cur === c ? 'on' : ''}"><span class="rn">${CHORD_RN[c]}</span><span class="nm">${CHORD_ROLE[c]} · ${chordName(c)}<small>${chordSolfa(c)}</small></span></button>`).join('') + `<button data-ch=""><span class="rn" style="color:var(--soft)">✕</span><span class="nm">화음 빼기</span></button>`;
+  const pr = $('paper').getBoundingClientRect(), cr = chipEl.getBoundingClientRect();
+  let left = cr.left - pr.left, top = cr.bottom - pr.top + 6;
+  left = Math.max(6, Math.min(left, pr.width - 256));
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  pop.classList.add('show');
+}
+function closeChordPop(){ $('chordPop').classList.remove('show'); popMi = -1; }
+function previewChord(sym){
+  if (!ensureAudio() || player) return;
+  const { bass, upper } = chordMidis(sym); const t = ctx.currentTime + 0.02;
+  [bass, ...upper].forEach(m => playVoice('piano', m, t, 0.9, 0.5));
+}
+const PROGS = {
+  basic: ['I','IV','V','I'],
+  period: ['I','IV','I','V','I','IV','V','I'],
+  gentle: ['I','I','IV','I','IV','I','V7','I'],
+};
+function applyProgression(id){
+  pushUndo();
+  if (id === 'clear') { doc.chords = doc.measures.map(() => null); refreshAll(); toast('화음 길잡이를 모두 지웠어요.'); return; }
+  const pat = PROGS[id]; const n = doc.measures.length;
+  doc.chords = doc.measures.map((_, i) => pat[i % pat.length]);
+  if (n > 1) { doc.chords[n - 1] = 'I'; if (doc.chords[n - 2] === 'I' || doc.chords[n - 2] === 'IV') doc.chords[n - 2] = 'V'; }
+  view.chords = true; $('chkChords').checked = true;
+  refreshAll();
+  toast('화음 진행 틀을 넣었어요. 마디 첫 박에 그 화음의 음(구성음)을 써 보세요!');
+}
+
+/* ================= 작은 악보(이론 예시) ================= */
+function withDoc(d, fn){
+  const sd = doc, sv = view;
+  doc = d; view = { label:'solfa', lyrics:false, chords: !!(d.chords && d.chords.some(c => c)) };
+  try { return fn(); } finally { doc = sd; view = sv; }
+}
+function exTonicStep(k){ return k.tonicL <= 4 ? 28 + k.tonicL : 21 + k.tonicL; }
+// bars: [[deg 또는 [deg...] 또는 null(쉼표), 길이], ...]
+function exDoc(keyId, bars, chords, opts = {}){
+  const k = KEYS[keyId], base = exTonicStep(k);
+  const ch = chords || bars.map(() => null);
+  const d = { v:1, title:'', composer:'', key:keyId, ts: opts.ts || [4,4], tempo: opts.tempo || 96, instrument: opts.instrument || 'piano', chords: ch.slice(), measures: bars.map((bar, bi) => bar.map(([deg, dur]) => {
+    if (deg === null) return { dur, rest:true, notes:[], lyric:'' };
+    return { dur, rest:false, lyric:'', notes: [].concat(deg).map(g => {
+      const step = base + g, l = ((step % 7) + 7) % 7;
+      let a = keyAcc(k.fifths, l);
+      const raise = k.mode === 'minor' && ((g % 7) + 7) % 7 === 6 && (ch[bi] === 'V' || ch[bi] === 'V7' || opts.raise7);
+      if (raise) a += 1;
+      return { step, acc:null, _alt:a };
+    }).sort((x, y) => x.step - y.step) };
+  })) };
+  withDoc(d, respellAll);
+  return d;
+}
+function renderMini(d, el){
+  const W = Math.max(300, Math.floor(el.clientWidth || 600));
+  const svg = withDoc(d, () => { const L = computeLayout(W, 'mini'); return `<svg class="mini-score" viewBox="0 0 ${W} ${L.H}" height="${L.H}" xmlns="http://www.w3.org/2000/svg">${drawScore(L, 'mini')}</svg>`; });
+  el.innerHTML = svg;
+}
+let exPlay = null;
+function stopExample(){
+  if (!exPlay) return;
+  exPlay.timers.forEach(clearTimeout);
+  try { exPlay.bus.gain.setTargetAtTime(0, ctx.currentTime, 0.03); const b = exPlay.bus; setTimeout(() => b.disconnect(), 300); } catch(_) {}
+  if (exPlay.btn) exPlay.btn.classList.remove('playing');
+  if (exPlay.el) exPlay.el.querySelectorAll('.ev.playing').forEach(g => g.classList.remove('playing'));
+  exPlay = null;
+}
+function playExample(d, el, btn, withAcc){
+  if (!ensureAudio()) return;
+  const same = exPlay && exPlay.btn === btn;
+  stopExample(); if (player) stopPlayback();
+  if (same) return;
+  const bus = ctx.createGain(); bus.connect(dry);
+  const t0 = ctx.currentTime + 0.08;
+  const timers = [];
+  let endTick = 0;
+  withDoc(d, () => {
+    const cap = capacity(), spb = 60 / doc.tempo / 4;
+    doc.measures.forEach((m, mi) => {
+      const al = measureAlters(mi); let t = 0;
+      m.forEach((ev, ei) => {
+        const tick = mi * cap + t, when = t0 + tick * spb;
+        if (!ev.rest) ev.notes.forEach((n, k) => playVoice(doc.instrument, midiOf(n.step, al[ei][k]), when, ev.dur * spb * 0.95, 0.85, bus));
+        if (el) {
+          timers.push(setTimeout(() => { const g = el.querySelector(`.ev[data-m="${mi}"][data-e="${ei}"]`); if (g) g.classList.add('playing'); }, (when - ctx.currentTime) * 1000));
+          timers.push(setTimeout(() => { const g = el.querySelector(`.ev[data-m="${mi}"][data-e="${ei}"]`); if (g) g.classList.remove('playing'); }, (when + ev.dur * spb - ctx.currentTime) * 1000 - 30));
+        }
+        t += ev.dur;
+      });
+      if (withAcc && doc.chords[mi]) accompHits(mi).forEach(h => h.midis.forEach(mm => playVoice('piano', mm, t0 + (mi * cap + h.t) * spb, h.dur * spb * 0.92, h.vel, bus)));
+      endTick = (mi + 1) * cap;
+    });
+    timers.push(setTimeout(() => stopExample(), (t0 + endTick * spb - ctx.currentTime) * 1000 + 400));
+  });
+  if (btn) btn.classList.add('playing');
+  exPlay = { bus, timers, btn, el };
+}
+
+/* ================= 작곡 이론 ================= */
+let thKeyId = null, lessonIdx = 0, lessonEx = {};
+const lessonDone = (() => { try { return JSON.parse(localStorage.getItem('doremi-lessons') || '[]'); } catch(_) { return []; } })();
+function markLesson(i){ if (!lessonDone.includes(i)) { lessonDone.push(i); try { localStorage.setItem('doremi-lessons', JSON.stringify(lessonDone)); } catch(_) {} } }
+function relMajor(id){ const k = KEYS[id]; return 'M' + k.fifths; }
+function relMinor(id){ const k = KEYS[id]; return 'm' + k.fifths; }
+function exBlock(id, title, btns){
+  return `<div class="ex"><div class="cap"><b>${title}</b><div class="btns">${btns.map(b => `<button class="pbtn${b.alt ? ' alt' : ''}" data-play="${id}" data-acc="${b.acc ? 1 : 0}">▶ ${b.label}</button>`).join('')}</div></div><div class="ex-score" data-ex="${id}"></div></div>`;
+}
+const LESSONS = [
+  { t:'으뜸음과 음계', s:'조의 중심 찾기', build(k){
+    lessonEx.scale = exDoc(k.id, [[[0,4],[1,4],[2,4],[3,4]], [[4,4],[5,4],[6,4],[7,4]]]);
+    return `<p class="lead">모든 가락에는 ‘집’ 같은 중심음이 있어요. 이 음을 <b>으뜸음</b>이라고 해요.</p>
+      <p>지금 보는 조는 <b>${k.ko}</b>예요. 으뜸음은 <b>${k.tonicKo}(${k.tonicEn})</b>이고, 계이름으로는 <b>${k.mode === 'major' ? '도' : '라'}</b>예요.</p>
+      ${exBlock('scale', `${k.ko}의 음계 (으뜸음에서 으뜸음까지)`, [{ label:'들어보기' }])}
+      <div class="idea green">가락을 <b>으뜸음으로 끝내면</b> 집에 돌아온 것처럼 안정감 있게 끝나요. 그래서 ‘스스로 점검’에 “으뜸음으로 끝났어요” 항목이 있어요.</div>
+      ${k.mode === 'minor' ? `<div class="idea amber">단조의 음계는 조표만 쓰면 위와 같아요. 하지만 Ⅴ화음을 쓸 때는 7번째 음(이끎음)을 반음 올려 쓰는 경우가 많아요. (레슨 7에서 들어 봐요)</div>` : ''}`;
+  }},
+  { t:'주요 3화음', s:'Ⅰ · Ⅳ · Ⅴ', build(k){
+    const B = s => CHORD_DEGS[s].map((d, i) => i && d < CHORD_DEGS[s][0] ? d + 7 : d);
+    lessonEx.chords = exDoc(k.id, [[[B('I'),16]], [[B('IV'),16]], [[B('V'),16]], [[[4,6,8,10],16]]], ['I','IV','V','V7'], { tempo:80 });
+    const card = (sym, cls, feel) => `<div class="ccard ${cls}"><span class="rn">${CHORD_RN[sym]}</span><span class="role">${CHORD_ROLE[sym]}</span><span class="tones">${chordSolfa(sym, k)} · ${chordName(sym, k)}</span><span class="feel">${feel}</span><button class="pbtn alt" data-chord="${sym}">▶ 화음 듣기</button></div>`;
+    return `<p class="lead">음계의 1번째·4번째·5번째 음 위에 3도씩 쌓은 세 화음을 <b>주요 3화음</b>이라고 해요.</p>
+      <div class="chord-cards">
+        ${card('I', 'c1', '<b>집</b> — 가장 안정된 중심 화음. 곡의 <b>처음과 끝</b>에 많이 써요.')}
+        ${card('IV', 'c4', '<b>나들이</b> — 집을 나서 부드럽게 나아가는 느낌. 곡의 <b>중간</b>에서 분위기를 바꿔요.')}
+        ${card('V', 'c5', '<b>두근두근</b> — 긴장이 높아지고 <b>Ⅰ로 돌아가고 싶은</b> 힘이 강한 화음.')}
+      </div>
+      ${exBlock('chords', '주요 3화음과 딸림7화음(Ⅴ7)', [{ label:'차례로 듣기' }])}
+      <div class="idea">Ⅴ7은 Ⅴ화음에 음 하나를 더 쌓은 화음이에요. Ⅰ로 가려는 힘이 더 강해져요.</div>
+      <p class="hint">‘집·나들이·두근두근’은 화음의 역할을 쉽게 떠올리기 위한 비유예요.</p>`;
+  }},
+  { t:'화음의 이야기', s:'Ⅰ → Ⅳ → Ⅴ → Ⅰ', build(k){
+    const B = { I:[0,2,4], IV:[0,3,5], V:[-1,1,4], V7:[-1,1,3,4] };
+    lessonEx.storyFull = exDoc(k.id, [[[B.I,16]], [[B.IV,16]], [[B.V,16]], [[B.I,16]]], ['I','IV','V','I'], { tempo:84 });
+    lessonEx.storyHalf = exDoc(k.id, [[[B.I,16]], [[B.IV,16]], [[B.I,16]], [[B.V,16]]], ['I','IV','I','V'], { tempo:84 });
+    return `<p class="lead">화음을 이어 가면 이야기가 생겨요. 가장 기본이 되는 줄거리는 이거예요.</p>
+      <div class="story"><div class="st"><b>Ⅰ</b><span>집에서 출발</span></div><span class="ar">→</span><div class="st"><b>Ⅳ</b><span>나들이</span></div><span class="ar">→</span><div class="st"><b>Ⅴ</b><span>두근두근, 절정</span></div><span class="ar">→</span><div class="st"><b>Ⅰ</b><span>집으로!</span></div></div>
+      ${exBlock('storyFull', 'Ⅰ – Ⅳ – Ⅴ – Ⅰ : 집으로 돌아와 끝나요', [{ label:'들어보기' }])}
+      ${exBlock('storyHalf', 'Ⅰ – Ⅳ – Ⅰ – Ⅴ : 두근두근에서 멈춰요', [{ label:'들어보기' }])}
+      <div class="idea green">두 개를 비교해 들어 보세요. 첫 번째는 “끝났다!”, 두 번째는 “아직 뒤가 있을 것 같은데?” 하는 느낌이 들어요. 이것이 다음 레슨의 <b>마침꼴</b>이에요.</div>
+      <p>위 화음들은 음을 조금씩만 움직여 부드럽게 이어지도록 자리를 바꿔 쌓았어요(자리바꿈).</p>`;
+  }},
+  { t:'마침꼴', s:'온마침과 반마침', build(k){
+    const bars = [
+      [[0,4],[2,4],[4,4],[2,4]], [[3,4],[4,4],[5,4],[3,4]], [[2,4],[4,4],[7,8]], [[6,4],[4,4],[1,8]],
+      [[0,4],[2,4],[4,4],[2,4]], [[3,4],[5,4],[7,8]], [[8,4],[6,4],[4,4],[6,4]], [[7,16]],
+    ];
+    lessonEx.period = exDoc(k.id, bars, ['I','IV','I','V','I','IV','V','I'], { tempo:100 });
+    return `<p class="lead">가락이 쉬어 가거나 끝나는 곳의 화음 모양을 <b>마침꼴</b>이라고 해요.</p>
+      <table class="tbl"><tr><th>이름</th><th>화음</th><th>느낌 · 쓰는 곳</th></tr>
+      <tr><td><b>온마침</b></td><td>Ⅴ(Ⅴ7) → Ⅰ</td><td>완전히 끝나는 느낌 · 곡의 <b>마지막</b></td></tr>
+      <tr><td><b>반마침</b></td><td>… → Ⅴ</td><td>잠깐 멈추고 이어질 것 같은 느낌 · 곡의 <b>중간</b></td></tr></table>
+      ${exBlock('period', '8마디 예시: 4마디는 반마침, 8마디는 온마침', [{ label:'가락만' , alt:true }, { label:'반주와 함께', acc:true }])}
+      <div class="idea">1~4마디(작은악절)는 Ⅴ에서 쉬어 가고(반마침), 5~8마디는 Ⅴ → Ⅰ로 끝나요(온마침). 질문하고 대답하는 것 같죠?</div>
+      <button class="big-cta" id="useExample">이 예시를 내 악보로 가져와서 바꿔 보기</button>`;
+  }},
+  { t:'화음에 어울리는 가락', s:'첫 박에는 구성음', build(k){
+    lessonEx.good = exDoc(k.id, [[[4,4],[2,4],[0,8]], [[1,4],[6,4],[4,8]]], ['I','V'], { tempo:92 });
+    lessonEx.bad = exDoc(k.id, [[[3,4],[5,4],[1,8]], [[0,4],[2,4],[5,8]]], ['I','V'], { tempo:92 });
+    const ts = chordSolfa('I', k), vs = chordSolfa('V', k);
+    return `<p class="lead">화음을 정했다면, 가락은 그 화음의 음(<b>구성음</b>)을 중심으로 만들면 잘 어울려요.</p>
+      <div class="idea green">요령: 마디의 <b>첫 박(센박)</b>에는 화음의 구성음을 쓰고, 여린박에서는 그 사이를 잇는 음을 자유롭게 써요. 작곡하기 화면의 화음 칸이 <b style="color:var(--green)">초록색 ✓</b>이면 첫 박이 잘 맞은 거예요.</div>
+      <p>예) Ⅰ = <b>${ts}</b>, Ⅴ = <b>${vs}</b></p>
+      ${exBlock('good', '어울리는 가락: 첫 박이 구성음', [{ label:'반주와 함께', acc:true }])}
+      ${exBlock('bad', '덜 어울리는 가락: 첫 박이 구성음이 아님', [{ label:'반주와 함께', acc:true }])}
+      <h4>박자의 셈여림</h4>
+      <table class="tbl"><tr><th>박자</th><th>셈여림</th></tr>
+      <tr><td>2박자</td><td><span class="strong-b"></span>강 – <span class="weak-b"></span>약</td></tr>
+      <tr><td>3박자</td><td><span class="strong-b"></span>강 – <span class="weak-b"></span>약 – <span class="weak-b"></span>약</td></tr>
+      <tr><td>4박자</td><td><span class="strong-b"></span>강 – <span class="weak-b"></span>약 – <span class="mid-b"></span>중강 – <span class="weak-b"></span>약</td></tr></table>`;
+  }},
+  { t:'악곡의 짜임', s:'동기 · 작은악절 · 큰악절', build(k){
+    return `<p class="lead">노래는 작은 조각이 모여 큰 덩어리가 되는 구조로 되어 있어요.</p>
+      <div class="form-diag">
+        <div class="form-row fr-m" style="grid-template-columns:repeat(4,1fr)"><div>동기 (2마디)</div><div>동기 (2마디)</div><div>동기 (2마디)</div><div>동기 (2마디)</div></div>
+        <div class="form-row fr-p" style="grid-template-columns:repeat(2,1fr)"><div>작은악절 a (4마디)</div><div>작은악절 a′ 또는 b (4마디)</div></div>
+        <div class="form-row fr-pp"><div>큰악절 A (8마디)</div></div>
+      </div>
+      <table class="tbl"><tr><th>이름</th><th>크기</th><th>설명</th></tr>
+      <tr><td><b>동기</b></td><td>보통 2마디</td><td>가락을 이루는 가장 작은 덩어리</td></tr>
+      <tr><td><b>작은악절</b></td><td>4마디</td><td>동기 2개</td></tr>
+      <tr><td><b>큰악절</b></td><td>8마디</td><td>작은악절 2개</td></tr>
+      <tr><td><b>한도막 형식</b></td><td>8마디</td><td>큰악절 1개 — 동요에 많이 쓰여요</td></tr>
+      <tr><td><b>두도막 형식</b></td><td>16마디</td><td>큰악절 2개</td></tr></table>
+      <div class="idea green">작곡 팁: <b>반복과 변화</b>. 처음 동기를 만들었다면, 그대로 한 번 되풀이하거나(a), 조금만 바꿔(a′) 써 보세요. 마디 복사·붙여넣기를 쓰면 쉬워요.</div>
+      <p>그래서 이 프로그램의 기본 마디 수가 <b>8마디(한도막 형식)</b>이에요. 더 길게 만들고 싶으면 16마디(두도막 형식)를 골라요.</p>`;
+  }},
+  { t:'장조와 단조', s:'밝은 느낌 · 어두운 느낌', build(k){
+    const M = relMajor(k.id), m = relMinor(k.id), KM = KEYS[M], Km = KEYS[m];
+    const bars = [[[0,4],[2,4],[4,4],[7,4]], [[4,4],[2,4],[0,8]]];
+    lessonEx.maj = exDoc(M, bars, ['I','I'], { tempo:96 });
+    lessonEx.min = exDoc(m, bars, ['I','I'], { tempo:96 });
+    lessonEx.minV = exDoc(m, [[[4,4],[6,4],[8,8]], [[7,16]]], ['V','I'], { tempo:92 });
+    return `<p class="lead">같은 조표를 쓰는 짝꿍 조가 있어요. <b>${KM.ko}</b>와 <b>${Km.ko}</b>처럼요(나란한조).</p>
+      ${exBlock('maj', `${KM.ko}: 으뜸음 ‘도’에서 시작해 ‘도’로 끝나요`, [{ label:'들어보기', acc:true }])}
+      ${exBlock('min', `${Km.ko}: 으뜸음 ‘라’에서 시작해 ‘라’로 끝나요`, [{ label:'들어보기', acc:true }])}
+      <div class="idea">일반적으로 장조는 밝게, 단조는 어둡거나 슬프게 느껴진다고 해요. 여러분은 어떻게 들리나요?</div>
+      <h4>단조의 Ⅴ화음과 이끎음</h4>
+      <p>단조에서 Ⅴ → Ⅰ로 힘차게 끝내려면, 음계의 7번째 음을 <b>반음 올려</b> 써요(조에 따라 ♯이나 ♮을 붙여요). 이 음을 <b>이끎음</b>이라고 해요. ${Km.ko}의 Ⅴ화음은 <b>${chordSolfa('V', Km)}</b>(${chordName('V', Km)})이에요.</p>
+      ${exBlock('minV', `${Km.ko}: Ⅴ → Ⅰ (임시표가 붙은 이끎음을 찾아보세요)`, [{ label:'반주와 함께', acc:true }])}`;
+  }},
+  { t:'작곡 순서', s:'따라 하면 완성!', build(k){
+    return `<p class="lead">무엇부터 해야 할지 모르겠다면 이 순서대로 해 보세요.</p>
+      <ol class="recipe">
+        <li><b>조·박자·마디 정하기</b>처음에는 다장조 · 4/4박자 · 8마디를 추천해요.</li>
+        <li><b>화음 진행 틀 넣기</b>‘Ⅰ–Ⅳ–Ⅰ–Ⅴ │ Ⅰ–Ⅳ–Ⅴ–Ⅰ (반마침→온마침)’을 고르면 마디마다 화음이 정해져요.</li>
+        <li><b>리듬 동기 만들기</b>첫 2마디의 리듬을 먼저 정해요. 손뼉으로 쳐 보면서!</li>
+        <li><b>첫 박에 구성음 놓기</b>마디마다 첫 박에 그 화음의 음을 놓아요. 화음 칸이 초록색 ✓이면 성공.</li>
+        <li><b>사이 음 채우기</b>여린박은 이웃한 음으로 자연스럽게 이어요. 박 막대가 초록색이 될 때까지!</li>
+        <li><b>반복과 변화</b>5~6마디는 1~2마디를 복사해서 조금만 바꿔 보아요.</li>
+        <li><b>으뜸음으로 끝내기</b>마지막 마디는 Ⅰ화음, 마지막 음은 으뜸음.</li>
+        <li><b>듣고 고치기 → 저장</b>화음 반주와 함께 들어 보고 고친 뒤, 점검 목록을 확인하고 저장해요.</li>
+      </ol>
+      <button class="big-cta" id="startRecipe">이 순서로 작곡 시작하기 (8마디 + 화음 진행 틀)</button>`;
+  }},
+];
+function initTheory(){
+  const thSel = $('thKey');
+  ['major', 'minor'].forEach(mode => {
+    const og = document.createElement('optgroup'); og.label = mode === 'major' ? '장조' : '단조';
+    KEY_ORDER.forEach(f => { const k = KEYS[(mode === 'major' ? 'M' : 'm') + f]; const o = document.createElement('option'); o.value = k.id; o.textContent = `${k.ko} (${k.en})`; og.appendChild(o); });
+    thSel.appendChild(og);
+  });
+  thSel.addEventListener('change', () => { thKeyId = thSel.value; renderLesson(); });
+  $('lessonList').addEventListener('click', e => { const b = e.target.closest('[data-li]'); if (b) { lessonIdx = +b.dataset.li; renderLesson(); $('lessonBox').scrollIntoView({ block:'start', behavior:'smooth' }); } });
+  $('lessonBox').addEventListener('click', e => {
+    const pb = e.target.closest('[data-play]');
+    if (pb) { const id = pb.dataset.play; playExample(lessonEx[id], $('lessonBox').querySelector(`[data-ex="${id}"]`), pb, pb.dataset.acc === '1'); return; }
+    const cb = e.target.closest('[data-chord]');
+    if (cb) { stopExample(); withDoc({ ...newDoc(), key: thKeyId }, () => previewChord(cb.dataset.chord)); return; }
+    const nv = e.target.closest('[data-nav]');
+    if (nv) { lessonIdx = Math.max(0, Math.min(LESSONS.length - 1, lessonIdx + +nv.dataset.nav)); renderLesson(); $('lessonBox').scrollIntoView({ block:'start', behavior:'smooth' }); return; }
+    if (e.target.id === 'useExample') {
+      if (hasNotes() && !confirm('지금 악보를 이 예시로 바꿀까요? (되돌리기로 다시 살릴 수 있어요)')) return;
+      pushUndo(); const d = JSON.parse(JSON.stringify(lessonEx.period));
+      doc = sanitizeDoc({ ...d, title:'', composer: doc.composer }); sel = null; showPage('compose'); refreshAll();
+      toast('예시를 가져왔어요. 음을 바꿔서 나만의 가락으로 만들어 봐요!');
+    }
+    if (e.target.id === 'startRecipe') {
+      if (hasNotes() && !confirm('새 8마디 악보로 시작할까요? 지금 악보는 되돌리기로 다시 살릴 수 있어요.')) return;
+      pushUndo(); doc = { ...newDoc(), key: thKeyId, composer: doc.composer }; sel = null; showPage('compose');
+      applyProgression('period'); undoStack.pop();
+      $('cardKey').scrollIntoView({ block:'start', behavior:'smooth' });
+    }
+  });
+}
+function renderLesson(){
+  stopExample();
+  if (!thKeyId) thKeyId = doc.key;
+  $('thKey').value = thKeyId;
+  const k = KEYS[thKeyId];
+  markLesson(lessonIdx);
+  $('lessonList').innerHTML = LESSONS.map((L, i) => `<li><button data-li="${i}" class="${i === lessonIdx ? 'on' : lessonDone.includes(i) ? 'done' : ''}"><span class="ln">${lessonDone.includes(i) && i !== lessonIdx ? '✓' : i + 1}</span><span>${L.t}<small>${L.s}</small></span></button></li>`).join('');
+  lessonEx = {};
+  const L = LESSONS[lessonIdx];
+  $('lessonBox').innerHTML = `<div class="kicker">레슨 ${lessonIdx + 1} / ${LESSONS.length} · ${k.ko}</div><h3>${L.t}</h3>${L.build(k)}
+    <div class="lesson-foot"><button class="mini" data-nav="-1" ${lessonIdx === 0 ? 'disabled' : ''}>← 이전 레슨</button><button class="mini" data-nav="1" ${lessonIdx === LESSONS.length - 1 ? 'disabled' : ''}>다음 레슨 →</button></div>`;
+  $('lessonBox').querySelectorAll('[data-ex]').forEach(el => renderMini(lessonEx[el.dataset.ex], el));
+}
+
+/* ================= 화면 전환 ================= */
+let currentPage = 'compose';
+function showPage(pg){
+  currentPage = pg;
+  ['compose', 'theory', 'manual'].forEach(p => { $('page-' + p).hidden = p !== pg; });
+  document.querySelectorAll('.apptabs [data-page]').forEach(b => b.classList.toggle('on', b.dataset.page === pg));
+  if (pg !== 'compose') { closeChordPop(); if (player) stopPlayback(); }
+  if (pg !== 'theory') stopExample();
+  if (pg === 'theory') { if (!thKeyId) thKeyId = doc.key; renderLesson(); }
+  if (pg === 'compose') requestAnimationFrame(renderScore);
+  try { history.replaceState(null, '', pg === 'compose' ? location.pathname : '#' + pg); } catch(_) {}
+}
+
+/* ================= 둘러보기 ================= */
+const TOUR = [
+  { el:'#cardKey', t:'조 · 박자 · 마디', d:'먼저 조와 박자, 마디 수를 정해요. 조를 고르면 오른쪽 작은 오선에 조표가 바로 보여요.' },
+  { el:'#cardTempo', t:'빠르기', d:'빠르기말을 누르거나 슬라이더로 곡의 빠르기를 정해요.' },
+  { el:'#toolbar', t:'음표 · 쉼표 · 임시표', d:'여기 있는 음표를 악보로 끌어다 놓아요. 한 번 누르면 ‘연속 놓기’가 되어 악보를 누를 때마다 놓여요.' },
+  { el:'#paper', t:'악보', d:'놓은 음을 위아래로 끌면 높이가 바뀌어요. 마디 위 ‘화음’ 칸으로 화음을 정하고, 마디 아래 막대가 초록색이 될 때까지 채워요.' },
+  { el:'#cardPlay', t:'연주하기', d:'악기를 고르고 재생해요. 화음 반주와 드럼을 켜면 더 신나요!' },
+  { el:'#cardSave', t:'저장 · 스스로 점검', d:'MIDI 파일·악보 그림으로 저장해 제출해요. 점검 목록을 모두 채워 보세요.' },
+  { el:'#navTheory', t:'작곡 이론', d:'주요 3화음, 마침꼴, 악곡의 짜임을 소리로 들으며 배울 수 있어요.' },
+  { el:'#navManual', t:'사용 설명서', d:'자세한 사용법과 단축키, 자주 묻는 질문이 있어요. 언제든 다시 볼 수 있어요.' },
+];
+const tour = { on:false, i:0 };
+function startTour(){ showPage('compose'); tour.on = true; tour.i = 0; $('tour').classList.add('show'); $('welcome').classList.remove('show'); try { localStorage.setItem('doremi-toured', '1'); } catch(_) {} tourStep(); }
+function endTour(){ tour.on = false; $('tour').classList.remove('show'); }
+function tourStep(){
+  const s = TOUR[tour.i]; const el = document.querySelector(s.el); if (!el) { endTour(); return; }
+  const r0 = el.getBoundingClientRect();
+  if (r0.top < 70 || r0.bottom > innerHeight - 40) scrollBy(0, r0.top - 90);
+  $('tourTip').innerHTML = `<span class="tk">${tour.i + 1} / ${TOUR.length}</span><b>${s.t}</b><p>${s.d}</p><div class="row"><button class="mini" data-tour="end">그만 보기</button><div class="row" style="gap:6px">${tour.i ? '<button class="mini" data-tour="prev">이전</button>' : ''}<button class="pbtn" data-tour="next">${tour.i === TOUR.length - 1 ? '시작하기!' : '다음'}</button></div></div>`;
+  requestAnimationFrame(placeTour);
+}
+function placeTour(){
+  if (!tour.on) return;
+  const el = document.querySelector(TOUR[tour.i].el); const r = el.getBoundingClientRect(); const pad = 8;
+  const h = $('tourHole'), tip = $('tourTip');
+  const top = Math.max(4, r.top - pad), height = Math.min(innerHeight - 8, r.bottom + pad) - top;
+  Object.assign(h.style, { left: (r.left - pad) + 'px', top: top + 'px', width: (r.width + pad * 2) + 'px', height: Math.max(20, height) + 'px' });
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let tt = r.bottom + 16; if (tt + th > innerHeight - 8) tt = r.top - th - 16; if (tt < 8) tt = Math.min(innerHeight - th - 8, Math.max(8, top + 20));
+  let tl = Math.max(16, Math.min(r.left, innerWidth - tw - 16));
+  tip.style.top = tt + 'px'; tip.style.left = tl + 'px';
+}
+
+/* ================= 설명서 아이콘 ================= */
+function fillManualIcons(){
+  document.querySelectorAll('[data-icon]').forEach(el => {
+    const ic = el.dataset.icon;
+    if (ic === 'n4') el.innerHTML = iconSVG(4, false);
+    else if (ic === 'n2') el.innerHTML = iconSVG(2, false);
+    else if (ic === 'r4') el.innerHTML = iconSVG(4, true);
+    else el.innerHTML = accIcon(ic);
+  });
+}
+
+function initExtras(){
+  $('chkChords').addEventListener('change', e => { view.chords = e.target.checked; closeChordPop(); refreshAll(); });
+  $('progSel').addEventListener('change', e => { const v = e.target.value; e.target.value = ''; if (v) applyProgression(v); });
+  $('chordPop').addEventListener('click', e => {
+    const b = e.target.closest('[data-ch]'); if (!b || popMi < 0) return;
+    pushUndo(); doc.chords[popMi] = b.dataset.ch || null; const c = doc.chords[popMi];
+    closeChordPop(); refreshAll(); if (c) previewChord(c);
+  });
+  document.addEventListener('pointerdown', e => { if ($('chordPop').classList.contains('show') && !e.target.closest('#chordPop') && !e.target.closest('.cchip')) closeChordPop(); });
+  document.querySelectorAll('.apptabs [data-page]').forEach(b => b.addEventListener('click', () => showPage(b.dataset.page)));
+  $('btnTour').onclick = startTour;
+  $('manTour').onclick = startTour;
+  $('wcGo').onclick = startTour;
+  $('wcNo').onclick = () => { $('welcome').classList.remove('show'); try { localStorage.setItem('doremi-toured', '1'); } catch(_) {} };
+  $('tourTip').addEventListener('click', e => {
+    const b = e.target.closest('[data-tour]'); if (!b) return;
+    const a = b.dataset.tour;
+    if (a === 'end') endTour();
+    else if (a === 'prev') { tour.i--; tourStep(); }
+    else if (tour.i === TOUR.length - 1) endTour();
+    else { tour.i++; tourStep(); }
+  });
+  addEventListener('resize', placeTour); addEventListener('scroll', placeTour, { passive:true });
+  document.addEventListener('keydown', e => { if (e.key === '?' && !/input|select|textarea/i.test(e.target.tagName)) showPage('manual'); });
+  initTheory();
+  fillManualIcons();
+  let seen = false; try { seen = !!localStorage.getItem('doremi-toured'); } catch(_) { seen = true; }
+  if (!seen) setTimeout(() => $('welcome').classList.add('show'), 600);
+  const h = location.hash.replace('#', '');
+  if (h === 'theory' || h === 'manual') showPage(h);
+}
 
 /* ================= 시작 ================= */
 (function init(){
   document.getElementById('glyphDefs').innerHTML = Object.entries(GL).map(([k, v]) => `<path id="g-${k}" d="${v.d}"/>`).join('');
   $('logoSvg').innerHTML = `<use href="#g-hBlack" transform="translate(0,0) scale(0.06)" fill="#1e2a6e"/><line x1="16.8" x2="16.8" y1="-2" y2="-20" stroke="#1e2a6e" stroke-width="2"/><use href="#g-f8u" transform="translate(16,-20) scale(0.06)" fill="#1e2a6e"/>`;
   initSettings();
+  initExtras();
   refreshAll();
   let rt = null;
   new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(renderScore, 60); }).observe($('paper'));
