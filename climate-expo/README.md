@@ -25,8 +25,7 @@
 | `admin.html` | 교사 화면 (PIN) |
 | `assets/config.js` | **Apps Script 웹앱 주소(API_URL)를 넣는 곳** |
 | `assets/style.css`, `common.js`, `student.js`, `admin.js` | 화면 코드 |
-| `gas/` | Apps Script 서버 코드 원본 7개 (clasp `rootDir`) |
-| `dist/Code.gs` | 위 7개를 하나로 합친 파일 — **복사-붙여넣기 배포용** (`node dev/bundle.js`로 다시 만듦) |
+| `gas/` | Apps Script 서버 코드 (clasp `rootDir`) |
 | `dev/` | 로컬 시험용(배포에 필요 없음) |
 
 모두 무료 도구입니다(GitHub Pages, Google Apps Script, Google 스프레드시트).
@@ -40,13 +39,10 @@
 1. Google 드라이브에서 **새 스프레드시트**를 만들고 이름을 `2050 기후 도시 엑스포`로 바꿉니다.
    - 기존 학급 앱(그로스포인트)과는 **다른 스프레드시트**를 씁니다.
 2. 메뉴 **확장 프로그램 → Apps Script**를 엽니다.
-3. 처음 있는 `Code.gs`의 내용을 **모두 지우고**, 이 저장소의 **`climate-expo/dist/Code.gs`** (서버 파일 7개를 하나로 합친 파일) 내용을 통째로 붙여넣습니다. 파일을 따로 만들 필요가 없습니다.
-4. **GitHub에서 전체를 복사하는 방법** — GitHub 코드 화면에서 Ctrl+A로 고르면 화면에 보이는 부분까지만 복사될 수 있으니 아래 중 하나를 쓰세요.
-   - **방법 A (가장 쉬움):** GitHub에서 `dist/Code.gs`를 열고, 코드 위쪽 오른쪽의 **복사 아이콘(Copy raw file)** 을 누름 → Apps Script에 Ctrl+V
-   - **방법 B:** 같은 화면의 **Raw** 버튼을 누르면 글자만 있는 페이지가 열림 → Ctrl+A → Ctrl+C → Apps Script에 Ctrl+V
-   - 휴대폰·태블릿보다 **PC(크롬북 포함) 브라우저**에서 하는 것을 권장
-   - 붙여넣은 뒤 Apps Script 맨 아래가 `// ===== Api.gs =====` 아래의 `function doGet(e) {` … `}` 로 끝나는지 확인 (끝이 잘렸으면 다시 복사)
-   - (clasp를 쓰거나 파일을 나눠 두고 싶으면 `gas/` 폴더의 7개 파일을 같은 이름으로 만들어 붙여넣어도 됩니다. **둘을 섞지는 마세요** — 같은 함수가 두 번 생겨 오류가 납니다.)
+3. 처음 있는 `Code.gs`의 내용을 모두 지웁니다(파일 이름을 `Api`로 바꿔 써도 됩니다).
+4. 왼쪽 **파일 ＋ → 스크립트**로 아래 7개 파일을 만들고, 이 저장소 `climate-expo/gas/`의 같은 이름 파일 내용을 그대로 붙여넣습니다.
+   `Api` · `AdminApi` · `Config` · `Data` · `Logic` · `Setup` · `StudentApi`
+   (편집기가 `.gs`를 자동으로 붙이므로 이름만 입력)
 5. (권장) 왼쪽 **⚙ 프로젝트 설정 → "편집기에서 appsscript.json 매니페스트 파일 표시"** 를 켜고, `appsscript.json` 내용을 `gas/appsscript.json`으로 바꿉니다. (시간대 `Asia/Seoul`, V8 런타임)
 6. 💾 저장 후, 위쪽 함수 목록에서 **`setupSheets`** 를 고르고 **▶ 실행**합니다.
    - 처음에는 권한 승인 창이 뜹니다. 내 계정 선택 → (경고가 나오면) 고급 → 프로젝트로 이동 → 허용.
@@ -77,7 +73,7 @@
 
 ### 2-4. 서버 코드를 고친 뒤 다시 배포할 때 (주소 유지)
 
-새 버전의 `dist/Code.gs`로 바꿔 붙여넣었거나 Apps Script에서 코드를 고쳤다면 **배포 → 배포 관리 → ✏️ 수정 → 버전: 새 버전 → 배포**.
+Apps Script에서 코드를 고쳤다면 **배포 → 배포 관리 → ✏️ 수정 → 버전: 새 버전 → 배포**.
 **"새 배포"를 또 만들면 주소가 바뀌어** config.js도 다시 고쳐야 합니다.
 시트 내용(카드 문구, 설정 값)만 고친 경우에는 다시 배포할 필요가 없습니다.
 
@@ -227,8 +223,6 @@ clasp push          # gas/ 폴더가 올라갑니다 (rootDir: gas)
 ```bash
 cd climate-expo
 node dev/test-server.js          # 서버 함수 시험
-node dev/bundle.js               # gas/ 를 고친 뒤 dist/Code.gs 다시 만들기
-node dev/test-server.js bundle   # 합본 파일로 같은 시험
 node dev/server.js               # http://localhost:8787/index.html , /admin.html (PIN 1234)
 node dev/e2e.js ./shots 4        # (Playwright 필요) 학생 4명 브라우저 통합 시험 + 스크린샷
 ```
