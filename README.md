@@ -19,3 +19,6 @@
 
 ## 라이선스 표시
 악보 기호 모양은 Bravura 글꼴(© Steinberg Media Technologies GmbH, SIL Open Font License 1.1)에서 가져왔습니다. `LICENSE-Bravura-OFL.txt` 참고.
+
+## 웹 주소로 배포 (GitHub Pages)
+저장소 Settings → Pages → Build and deployment에서 Source를 **Deploy from a branch**로, Branch를 `claude/cool-cori-6cne6l` / `/(root)`로 정하고 Save를 누르면 몇 분 뒤 https://jongku93.github.io/KJG/ 에서 열립니다.
