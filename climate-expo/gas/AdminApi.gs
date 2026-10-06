@@ -65,63 +65,111 @@ function apiAdminState(token) {
 /* ---------- 명단·팀 ---------- */
 
 /**
- * text: 한 줄에 "번호, 이름, 팀" (쉼표 또는 탭). 팀 칸이 비면 자동 배정.
- * assign: 'order'(번호 순서대로 묶기) | 'random'
+ * text: 한 줄에 "번호, 이름, 기후" 또는 "번호, 이름, 팀번호" (쉼표 또는 탭).
+ * - 기후 이름(열대·건조…)을 쓰면 같은 기후끼리 한 팀이 되고 팀 기후도 정해진다. (경매로 정한 결과를 그대로 넣기)
+ * - 팀번호를 쓰거나 비우면 예전처럼 팀만 나누고, 기후는 교사 화면에서 따로 정한다.
+ * assign: 팀번호를 비웠을 때 'order'(번호 순서대로 묶기) | 'random'
  */
 function apiAdminSaveRoster(token, text, teamCount, assign) {
   requireAdmin_(token);
+  var climateNames = readTableFresh_('Climates').map(function (c) { return String(c.name).trim(); }).filter(String);
   var lines = String(text || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(String);
   var people = [];
   var seen = {};
+  var badClimate = [];
   lines.forEach(function (line) {
     var parts = line.split(/\t|,/).map(function (p) { return p.trim(); });
     var no = parseInt(parts[0], 10);
     if (isNaN(no) || !parts[1]) return; // 머리글 줄 등은 건너뜀
     if (seen[no]) throw new Error(no + '번이 두 번 들어 있어요.');
     seen[no] = true;
-    var tm = String(parts[2] || '').match(/\d+/);
-    people.push({ no: no, name: parts[1], teamNo: tm ? parseInt(tm[0], 10) : 0 });
+    var third = String(parts[2] || '').trim();
+    var climate = climateNames.filter(function (c) { return third === c || third === c + '팀' || third === c + ' 팀' || third === c + '기후'; })[0] || '';
+    var tm = climate ? null : third.match(/^\d+/);
+    if (third && !climate && !tm) badClimate.push(no + '번 "' + third + '"');
+    people.push({ no: no, name: parts[1], climate: climate, teamNo: tm ? parseInt(tm[0], 10) : 0 });
   });
-  if (!people.length) throw new Error('명단을 읽지 못했어요. "번호, 이름, 팀" 형식으로 한 줄에 한 명씩 넣어 주세요.');
+  if (badClimate.length) throw new Error('세 번째 칸을 알아볼 수 없어요: ' + badClimate.join(', ') + ' — 기후 이름(' + climateNames.join('·') + ') 또는 팀번호를 넣어 주세요.');
+  if (!people.length) throw new Error('명단을 읽지 못했어요. "번호, 이름, 기후" 형식으로 한 줄에 한 명씩 넣어 주세요.');
 
-  var n = Math.max(1, Math.min(12, parseInt(teamCount, 10) || 6));
-  people.forEach(function (p) { if (p.teamNo > n) n = p.teamNo; });
-
-  var need = people.filter(function (p) { return !p.teamNo; });
-  if (need.length) {
-    if (assign === 'random') {
-      for (var i = need.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var tmp = need[i]; need[i] = need[j]; need[j] = tmp;
-      }
-      need.forEach(function (p, k) { p.teamNo = (k % n) + 1; });
-    } else {
-      need.sort(function (a, b) { return a.no - b.no; });
-      var size = Math.ceil(need.length / n);
-      need.forEach(function (p, k) { p.teamNo = Math.floor(k / size) + 1; });
-    }
+  var byClimate = people.filter(function (p) { return p.climate; }).length;
+  if (byClimate && byClimate < people.length) {
+    var miss = people.filter(function (p) { return !p.climate; }).map(function (p) { return p.no + '번'; });
+    throw new Error('기후가 빠진 학생이 있어요: ' + miss.join(', ') + ' (기후로 넣을 때는 모든 학생에게 기후를 적어 주세요)');
   }
+  var climateMode = byClimate > 0;
 
   withLock_(function () {
     var oldTeams = readTableFresh_('Teams');
     var oldStudents = readTableFresh_('Students');
     var used = {};
     oldTeams.forEach(function (t) { if (t.code) used[String(t.code).toUpperCase()] = true; });
+    var copyOf = function (old) {
+      var c = {};
+      SCHEMA.Teams.fields.forEach(function (f) { c[f[0]] = old[f[0]]; });
+      if (!c.code) c.code = newTeamCode_(used);
+      return c;
+    };
     var teams = [];
-    for (var k = 1; k <= n; k++) {
-      var id = 'T' + k;
-      var old = oldTeams.filter(function (t) { return t.id === id; })[0];
-      if (old) {
-        var copy = {};
-        SCHEMA.Teams.fields.forEach(function (f) { copy[f[0]] = old[f[0]]; });
-        if (!copy.code) copy.code = newTeamCode_(used);
-        teams.push(copy);
-      } else {
-        teams.push({ id: id, name: k + '팀', code: newTeamCode_(used) });
+    var teamIdOf = {}; // 학생 번호 → 팀ID
+
+    if (climateMode) {
+      // 기후 순서(Climates 탭 순서)대로 팀을 만들고, 같은 기후였던 팀은 코드·재난·포스터를 이어받음
+      var present = climateNames.filter(function (c) { return people.some(function (p) { return p.climate === c; }); });
+      var takenIds = {};
+      var plan = present.map(function (c) {
+        var old = oldTeams.filter(function (t) { return t.climate === c && !takenIds[t.id]; })[0];
+        if (old) takenIds[old.id] = true;
+        return { climate: c, old: old };
+      });
+      var nextId = 1;
+      plan.forEach(function (pl) {
+        if (pl.old) { pl.id = pl.old.id; return; }
+        while (takenIds['T' + nextId]) nextId++;
+        pl.id = 'T' + nextId;
+        takenIds[pl.id] = true;
+      });
+      plan.sort(function (a, b) { return Number(a.id.slice(1)) - Number(b.id.slice(1)); });
+      plan.forEach(function (pl) {
+        var row;
+        if (pl.old) row = copyOf(pl.old);
+        else {
+          var sameId = oldTeams.filter(function (t) { return t.id === pl.id; })[0];
+          row = { id: pl.id, code: sameId && sameId.code ? sameId.code : newTeamCode_(used) };
+        }
+        row.climate = pl.climate;
+        if (!pl.old) row.name = pl.climate + '팀';
+        else if (!row.name) row.name = pl.climate + '팀';
+        teams.push(row);
+        people.forEach(function (p) { if (p.climate === pl.climate) teamIdOf[p.no] = pl.id; });
+      });
+    } else {
+      var n = Math.max(1, Math.min(12, parseInt(teamCount, 10) || 6));
+      people.forEach(function (p) { if (p.teamNo > n) n = p.teamNo; });
+      var need = people.filter(function (p) { return !p.teamNo; });
+      if (need.length) {
+        if (assign === 'random') {
+          for (var i = need.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = need[i]; need[i] = need[j]; need[j] = tmp;
+          }
+          need.forEach(function (p, k) { p.teamNo = (k % n) + 1; });
+        } else {
+          need.sort(function (a, b) { return a.no - b.no; });
+          var size = Math.ceil(need.length / n);
+          need.forEach(function (p, k) { p.teamNo = Math.floor(k / size) + 1; });
+        }
       }
+      for (var k = 1; k <= n; k++) {
+        var id = 'T' + k;
+        var old = oldTeams.filter(function (t) { return t.id === id; })[0];
+        teams.push(old ? copyOf(old) : { id: id, name: k + '팀', code: newTeamCode_(used) });
+      }
+      people.forEach(function (p) { teamIdOf[p.no] = 'T' + p.teamNo; });
     }
+
     var students = people.sort(function (a, b) { return a.no - b.no; }).map(function (p) {
-      var teamId = 'T' + p.teamNo;
+      var teamId = teamIdOf[p.no];
       var old = oldStudents.filter(function (s) { return String(s.no) === String(p.no) && s.team === teamId; })[0];
       return { no: p.no, name: p.name, team: teamId, role: old ? old.role : '', lastSeen: old ? old.lastSeen : '' };
     });
@@ -192,12 +240,27 @@ function apiAdminSetOverride(token, teamId, n, value) {
 
 /* ---------- 기후·재난 ---------- */
 
-function apiAdminResetClimate(token, teamId) {
+/** 팀 기후 정하기(경매 결과 입력). '' = 비우기. 다른 팀과 겹치면 안 됨 */
+function apiAdminSetClimate(token, teamId, climate) {
   requireAdmin_(token);
+  climate = String(climate || '').trim();
   withLock_(function () {
-    var team = readTableFresh_('Teams').filter(function (t) { return t.id === teamId; })[0];
+    var teams = readTableFresh_('Teams');
+    var team = teams.filter(function (t) { return t.id === teamId; })[0];
     if (!team) throw new Error('팀을 찾을 수 없어요.');
-    setCells_('Teams', team._row, { climate: '', disaster: '', updated: now_() });
+    if (climate) {
+      var c = readTableFresh_('Climates').filter(function (x) { return String(x.name).trim() === climate; })[0];
+      if (!c) throw new Error('없는 기후예요: ' + climate);
+      var other = teams.filter(function (t) { return t.id !== teamId && t.climate === climate; })[0];
+      if (other) throw new Error(climate + ' 기후는 이미 ' + other.name + '이(가) 맡았어요. 그 팀 기후를 먼저 바꿔 주세요.');
+    }
+    var upd = { climate: climate, updated: now_() };
+    // 재난 카드가 이전 기후 것이면 비움(공통 와일드카드는 유지)
+    if (team.disaster && team.climate !== climate) {
+      var d = readTableFresh_('Disasters').filter(function (x) { return x.id === team.disaster; })[0];
+      if (!d || d.climate !== WILD) upd.disaster = '';
+    }
+    setCells_('Teams', team._row, upd);
     bump_('Teams');
   });
   return apiAdminState(token);
@@ -297,7 +360,7 @@ function apiAdminRegisterWorld(token, teamId) {
   requireAdmin_(token);
   var ctx = loadCtx_();
   var r = computeResults_(ctx).filter(function (x) { return x.id === teamId; })[0];
-  if (!r) throw new Error('기후를 뽑은 팀만 등록할 수 있어요.');
+  if (!r) throw new Error('기후가 정해진 팀만 등록할 수 있어요.');
   var obj = { team: r.id, city: r.city, climate: r.climate, intro: r.intro || '', poster: r.poster || '', votes: r.coins, regAt: now_() };
   withLock_(function () {
     var same = readTableFresh_('World_Buildings').filter(function (w) {

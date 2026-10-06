@@ -17,7 +17,7 @@
   };
 
   var STAGES = [
-    { n: 1, icon: '🃏', name: '뽑는다', desc: '기후 카드를 뽑고 팀원 직책을 정해요.' },
+    { n: 1, icon: '🗺️', name: '정한다', desc: '우리 팀이 맡은 기후를 확인하고 팀원 직책을 정해요.' },
     { n: 2, icon: '🏗️', name: '짓는다', desc: '직책별로 "이 기후라서 이렇게 지었다"를 기록해요.' },
     { n: 3, icon: '🌪️', name: '버틴다', desc: '재난 카드가 오면 대응 방법과 고친 설계를 적어요.' },
     { n: 4, icon: '🏆', name: '자랑한다', desc: 'Canva 포스터로 엑스포에 참가하고 다른 도시에 투자해요.' }
@@ -246,7 +246,6 @@
     var st = S.st, out = [];
     var me = st.me;
     if (stage(1).open) {
-      if (!st.team.climate) out.push(['s1', '팀 대표가 기후 카드를 뽑아요.']);
       if (!me.role) out.push(['s1', '내 직책을 골라요.']);
     }
     if (stage(2).open && st.team.climate) {
@@ -333,67 +332,19 @@
     sig: function () { return [stage(1).open, S.st.team.climate].join('|'); },
     render: function () {
       var st = S.st, open = stage(1).open;
-      if (!open && !st.team.climate) return lockedPanel('🔒', '1단계가 아직 잠겨 있어요', '선생님이 열면 기후 카드를 뽑을 수 있어요.');
-      var html = '';
-      if (st.climateInfo) {
-        html += climateInfoCard(st.climateInfo);
-      } else {
-        var taken = st.climates.filter(function (c) { return c.takenBy; });
-        var left = st.climates.filter(function (c) { return !c.takenBy; });
-        html += '<div class="card"><div class="card-title"><h2>🃏 기후 카드 뽑기</h2></div>' +
-          '<p class="muted">팀 대표 한 명이 뒤집힌 카드 하나를 눌러요. 이미 다른 팀이 뽑은 기후는 나오지 않아요.</p>' +
-          '<div class="deck" id="deck">' +
-          taken.map(function (c) {
-            return '<div class="flip flipped taken"><div class="inner"><div class="face back"></div>' +
-              '<div class="face front" style="--c:' + esc(c.color) + '">' + climateFront(c, c.takenBy) + '</div></div></div>';
-          }).join('') +
-          left.map(function () {
-            return '<div class="flip pickable" data-pick><div class="inner"><div class="face back"><div class="q">?</div><div class="t">CLIMATE CARD</div></div>' +
-              '<div class="face front"></div></div></div>';
-          }).join('') +
-          '</div>' + (left.length ? '' : '<p class="chip bad" style="margin-top:12px">남은 기후 카드가 없어요. 선생님께 알려 주세요.</p>') + '</div>';
-      }
-      html += rolesCard(open);
-      return html;
+      if (!open && !st.team.climate) return lockedPanel('🔒', '1단계가 아직 잠겨 있어요', '선생님이 열면 우리 기후를 확인하고 직책을 정할 수 있어요.');
+      var html = st.climateInfo ? climateInfoCard(st.climateInfo)
+        : '<div class="card locked-panel"><div class="big">🗺️</div><h2>우리 팀 기후를 기다리는 중</h2>' +
+          '<p class="muted">선생님이 우리 팀 기후를 입력하면 여기에 기후 카드가 나타나요. 그동안 직책을 먼저 정해도 돼요.</p></div>';
+      return html + rolesCard(open);
     },
     patch: function (el) {
       var box = $('#rolesBox', el);
       if (box) box.outerHTML = rolesCard(stage(1).open);
       bindRoles(el);
     },
-    bind: function (el) {
-      $all('[data-pick]', el).forEach(function (card) {
-        card.addEventListener('click', function () { drawClimate(card); });
-      });
-      bindRoles(el);
-    }
+    bind: function (el) { bindRoles(el); }
   };
-
-  async function drawClimate(card) {
-    if (S.animating) return;
-    var ok = await E.confirmBox('기후 카드를 뽑을까요?', '<p><b>팀 대표 한 명만</b> 눌러 주세요. 한 번 뽑으면 바꿀 수 없어요.</p>', '뽑기!', 'gold');
-    if (!ok) return;
-    S.animating = true;
-    card.classList.add('shake');
-    try {
-      var st = await sapi('drawClimate');
-      var c = st.climateInfo;
-      var front = card.querySelector('.front');
-      front.style.setProperty('--c', c.color);
-      front.innerHTML = climateFront(c, '우리 기후!');
-      card.classList.remove('shake');
-      card.classList.add('flipped', 'mine');
-      await wait(1500);
-      S.animating = false;
-      applyState(st);
-      toast(c.icon + ' ' + c.name + ' 기후를 뽑았어요!', 'ok');
-    } catch (e) {
-      S.animating = false;
-      card.classList.remove('shake');
-      toast(e.message, 'error');
-      poll();
-    }
-  }
 
   function rolesCard(open) {
     var st = S.st;
@@ -578,7 +529,7 @@
     render: function () {
       var st = S.st, c = st.climateInfo;
       if (!stage(2).open) return lockedPanel('🔒', '2단계는 선생님이 열면 시작해요', '그동안 1단계에서 우리 기후 카드를 다시 읽어 보세요.');
-      if (!c) return lockedPanel('🃏', '먼저 기후 카드를 뽑아요', '1단계에서 팀 대표가 기후 카드를 뽑으면 설계를 시작할 수 있어요.');
+      if (!c) return lockedPanel('🗺️', '아직 우리 팀 기후가 정해지지 않았어요', '선생님이 기후를 입력하면 설계를 시작할 수 있어요.');
       var f = function (key) { return st.designFields.filter(function (x) { return x.key === key; })[0]; };
       var order = st.roles.slice().sort(function (a, b) { return (b.id === st.me.role) - (a.id === st.me.role); });
       return '<div class="card"><div class="design-head">' + climateBadge(c) +
@@ -682,7 +633,7 @@
           '<li>우리 기후에서 일어날 수 있는 재난을 하나 떠올려 보세요.</li>' +
           '<li>그 재난이 오면 우리 도시의 어느 설계가 버텨 줄까요?</li></ul></div></div>';
       }
-      if (!st.team.climate) return lockedPanel('🃏', '먼저 기후 카드를 뽑아요', '1단계에서 기후를 뽑아야 재난 카드를 받을 수 있어요.');
+      if (!st.team.climate) return lockedPanel('🗺️', '아직 우리 팀 기후가 정해지지 않았어요', '기후가 정해져야 재난 카드를 받을 수 있어요.');
       if (!st.disaster) return disasterDeck('재난 카드 뽑기', 'id="btnDrawDis"');
       if (!revealed()) return disasterDeck('카드 뒤집기', 'id="btnReveal"');
       var d = st.disaster;

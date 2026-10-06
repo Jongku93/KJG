@@ -77,7 +77,7 @@ function teamStatus_(ctx, team) {
   var resp = responseOf_(ctx, team.id);
 
   var miss1 = [];
-  if (!team.climate) miss1.push('기후 카드 뽑기');
+  if (!team.climate) miss1.push('기후 정하기(선생님)');
   members.forEach(function (m) { if (!m.role) miss1.push(m.name + ' 직책 선택'); });
   if (!members.length) miss1.push('팀원 없음');
 
@@ -160,7 +160,7 @@ function computePoints_(ctx) {
         var p = num_(s[key], 0);
         if (p) rows.push({ pid: pid + '-' + m.no + '-' + code, no: m.no, name: m.name, team: team.id, code: code, item: item, points: p });
       };
-      if (st.stages[0].done) add('STAGE1', '1단계 완료(뽑기·직책)', 'POINT_STAGE1');
+      if (st.stages[0].done) add('STAGE1', '1단계 완료(기후·직책)', 'POINT_STAGE1');
       if (studentStage2Done_(m, st.design)) add('STAGE2', '2단계 완료(설계 기록)', 'POINT_STAGE2');
       if (st.stages[2].done) add('DISASTER', '재난 대응', 'POINT_DISASTER');
       if (st.stages[3].done) add('STAGE4', '4단계 완료(포스터 제출)', 'POINT_STAGE4');

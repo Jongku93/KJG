@@ -56,8 +56,6 @@ function buildStudentState_(ctx, team, student) {
   var st = teamStatus_(ctx, team);
   var me = st.members.filter(function (m) { return String(m.no) === String(student.no); })[0];
   var d = designOf_(ctx, team.id);
-  var takenBy = {};
-  ctx.teams.forEach(function (t) { if (t.climate) takenBy[t.climate] = t; });
 
   var state = {
     serverTime: Utilities.formatDate(now_(), 'Asia/Seoul', 'HH:mm:ss'),
@@ -78,13 +76,6 @@ function buildStudentState_(ctx, team, student) {
     },
     climateInfo: climateOf_(ctx, team.climate),
     stages: st.stages,
-    climates: ctx.climates.filter(function (c) { return truthy_(c.active) || takenBy[c.name]; }).map(function (c) {
-      var o = publicClimate_(c);
-      var t = takenBy[c.name];
-      o.takenBy = t ? t.name : '';
-      o.mine = !!t && t.id === team.id;
-      return o;
-    }),
     design: d.values,
     designMeta: { updated: d.updated, by: d.by },
     disaster: team.disaster ? disasterOf_(ctx, team.disaster) : null,
@@ -127,24 +118,7 @@ function buildExpo_(ctx, myTeamId) {
   });
 }
 
-/* ---------- 1단계: 기후 뽑기, 직책 ---------- */
-
-function apiDrawClimate(code, no) {
-  withLock_(function () {
-    var a = authFresh_(code, no);
-    var settings = getSettings_();
-    if (!stageOpen_(settings, a.team, 1)) throw new Error('1단계가 아직 잠겨 있어요.');
-    if (a.team.climate) return;
-    var taken = {};
-    a.teams.forEach(function (t) { if (t.climate) taken[t.climate] = true; });
-    var avail = readTableFresh_('Climates').filter(function (c) { return c.name && truthy_(c.active) && !taken[c.name]; });
-    if (!avail.length) throw new Error('남은 기후 카드가 없어요. 선생님께 알려 주세요.');
-    var pick = avail[Math.floor(Math.random() * avail.length)];
-    setCells_('Teams', a.team._row, { climate: pick.name, updated: now_() });
-    bump_('Teams');
-  });
-  return apiState(code, no);
-}
+/* ---------- 1단계: 직책 (기후는 교사가 정함) ---------- */
 
 function apiChooseRole(code, no, roleId) {
   withLock_(function () {

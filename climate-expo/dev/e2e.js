@@ -19,7 +19,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const errors = [];
   const tok = (await api('adminLogin', '1234')).token;
   await api('adminResetAll', tok, '초기화', true);
-  const roster = Array.from({ length: 24 }, (_, i) => `${i + 1},학생${i + 1},`).join('\n');
+  const CL = ['열대', '건조', '온대', '냉대', '한대', '고산'];
+  const roster = Array.from({ length: 24 }, (_, i) => `${i + 1},학생${i + 1},${CL[Math.floor(i / 4)]}`).join('\n');
   let st = await api('adminSaveRoster', tok, roster, 6, 'order');
   const team = st.dashboard[0];
   const browser = await chromium.launch();
@@ -41,17 +42,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await a.click('[data-view=mission]');
   await a.screenshot({ path: `${out}/st-mission.png`, fullPage: true });
 
-  // 다른 팀 하나는 API로 먼저 뽑아 둔다
-  const t2 = st.dashboard[1];
-  await api('drawClimate', t2.code, t2.members[0].no);
-
-  // 1단계: 기후 뽑기
+  // 1단계: 교사가 정한 기후 확인
   await a.click('[data-view=s1]');
-  await a.screenshot({ path: `${out}/st-s1-deck.png` });
-  await a.click('[data-pick]');
-  await a.click('.modal .btn.gold');
-  await sleep(700);
-  await a.screenshot({ path: `${out}/st-s1-flip.png` });
   await a.waitForSelector('.climate-info', { timeout: 8000 });
   // 직책
   const roles = ['housing', 'energy', 'food', 'transport'];
@@ -120,7 +112,6 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     // 나머지 팀은 API로 빠르게 채움
     st = await api('adminState', tok);
     for (const t of st.dashboard.slice(1)) {
-      await api('drawClimate', t.code, t.members[0].no);
       const s2 = await api('state', t.code, t.members[0].no);
       await api('saveDesign', t.code, t.members[1].no, 'city_name', s2.climateInfo.name + ' 미래 도시', '');
       await api('saveDesign', t.code, t.members[1].no, 'intro', s2.climateInfo.desc + '에 맞춘 도시', '');

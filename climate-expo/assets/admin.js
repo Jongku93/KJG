@@ -16,9 +16,9 @@
     ['cards', '🃏 카드 편집'],
     ['settings', '⚙️ 설정·초기화']
   ];
-  var STAGE_NAMES = { 1: '뽑는다', 2: '짓는다', 3: '버틴다', 4: '자랑한다' };
+  var STAGE_NAMES = { 1: '정한다', 2: '짓는다', 3: '버틴다', 4: '자랑한다' };
   var FLAG_INFO = [
-    ['STAGE1_OPEN', 1, '1단계 뽑는다', '기후 카드 뽑기 · 직책 정하기'],
+    ['STAGE1_OPEN', 1, '1단계 정한다', '우리 기후 확인 · 직책 정하기 (기후는 명단·팀 코드 탭에서 교사가 입력)'],
     ['STAGE2_OPEN', 2, '2단계 짓는다', '직책별 설계 기록'],
     ['STAGE3_OPEN', 3, '3단계 버틴다', '재난 경보! 재난 카드 뽑기 · 대응 작성'],
     ['STAGE4_OPEN', 4, '4단계 자랑한다', 'Canva 포스터 제출 · 엑스포 관람'],
@@ -278,14 +278,13 @@
     html += '<div class="card"><div class="card-title"><h2>🌪️ 재난 카드</h2></div>' +
       '<p class="small muted">3단계를 열면 각 팀이 직접 뽑을 수 있어요. 한꺼번에 나눠 주려면 [재난 카드 배부]를 누르세요. 우리 기후 카드 2장 + 공통 와일드카드 중 무작위로 나가요.</p>' +
       '<button class="btn gold" id="btnDistribute">🌪️ 재난 카드 배부 (아직 없는 팀)</button>' +
-      '<div class="table-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>팀</th><th>기후</th><th>재난 카드</th><th>기후 카드</th></tr></thead><tbody>' +
+      '<div class="table-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>팀</th><th>기후</th><th>재난 카드</th></tr></thead><tbody>' +
       st.dashboard.map(function (t) {
         var pool = st.disasters.filter(function (d) { return d.climate === t.climate || d.climate === '공통'; });
         return '<tr><td><b>' + esc(t.name) + '</b></td><td>' + climateBadge(t.climateInfo, t.climate) + '</td><td>' +
           (t.climate ? '<select data-dis="' + esc(t.id) + '"><option value="">— 없음 —</option>' + pool.map(function (d) {
             return '<option value="' + esc(d.id) + '" ' + (t.disaster && t.disaster.id === d.id ? 'selected' : '') + '>' + esc((d.climate === '공통' ? '[공통] ' : '') + d.name) + '</option>';
-          }).join('') + '</select>' : '<span class="muted small">기후 먼저</span>') +
-          '</td><td>' + (t.climate ? '<button class="btn sm danger" data-reclimate="' + esc(t.id) + '">기후 다시 뽑게 하기</button>' : '') + '</td></tr>';
+          }).join('') + '</select>' : '<span class="muted small">기후 먼저</span>') + '</td></tr>';
       }).join('') + '</tbody></table></div></div>';
     return html;
   }
@@ -322,20 +321,18 @@
       });
     });
     $('#btnDistribute', view).addEventListener('click', function (e) { act(e.currentTarget, 'adminDistributeDisasters').catch(function () {}); });
-    $all('[data-reclimate]', view).forEach(function (b) {
-      b.addEventListener('click', async function () {
-        var ok = await E.confirmBox('기후를 비울까요?', '<p>이 팀의 기후와 재난 카드가 비워지고, 1단계에서 다시 뽑을 수 있어요. 적어 둔 설계 내용은 남아요.</p>', '비우기', 'danger solid');
-        if (ok) act(b, 'adminResetClimate', b.dataset.reclimate).catch(function () {});
-      });
-    });
   }
 
   /* ---------- 명단·팀 코드 ---------- */
 
   function rosterText() {
-    var lines = ['번호,이름,팀'];
-    A.st.dashboard.forEach(function (t) {
-      t.members.forEach(function (m) { lines.push(m.no + ',' + m.name + ',' + t.id.replace('T', '')); });
+    var d = A.st.dashboard;
+    var hasMembers = d.some(function (t) { return t.members.length; });
+    var byClimate = hasMembers && d.every(function (t) { return !t.members.length || t.climate; });
+    if (!hasMembers) return '번호,이름,기후\n1,김하늘,열대\n2,이바다,열대';
+    var lines = [byClimate ? '번호,이름,기후' : '번호,이름,팀'];
+    d.forEach(function (t) {
+      t.members.forEach(function (m) { lines.push(m.no + ',' + m.name + ',' + (byClimate ? t.climate : t.id.replace('T', ''))); });
     });
     return lines.join('\n');
   }
@@ -346,20 +343,26 @@
     st.dashboard.forEach(function (t) { t.members.forEach(function (m) { allMembers.push({ m: m, t: t }); }); });
     allMembers.sort(function (a, b) { return Number(a.m.no) - Number(b.m.no); });
     return '<div class="card"><div class="card-title"><h2>명단 입력</h2></div>' +
-      '<p class="small muted">한 줄에 한 명씩 <b>번호, 이름, 팀번호</b>. 스프레드시트에서 세 열을 복사해 붙여넣어도 돼요. 팀번호를 비우면 아래 방식으로 자동 배정해요.</p>' +
+      '<p class="small muted">한 줄에 한 명씩 <b>번호, 이름, 기후</b> (경매 결과). 같은 기후끼리 한 팀이 되고 팀 기후도 함께 정해져요. 스프레드시트에서 세 열을 복사해 붙여넣어도 돼요.</p>' +
+      '<p class="tiny muted">기후 이름: ' + st.climates.map(function (c) { return esc(c.icon + ' ' + c.name); }).join(' · ') + ' — 기후 대신 팀번호를 쓰거나 비우면 팀만 나누고(아래 방식), 기후는 아래 표에서 따로 고를 수 있어요.</p>' +
       '<textarea id="rosterText" rows="10" style="font-family:ui-monospace,monospace">' + esc(rosterText()) + '</textarea>' +
       '<div class="row" style="margin-top:10px">' +
-      '<label class="row small">팀 수 <input id="teamCount" type="number" min="1" max="12" value="' + Math.max(st.dashboard.length, 1) + '" style="width:80px"></label>' +
+      '<label class="row small">(팀번호 방식일 때) 팀 수 <input id="teamCount" type="number" min="1" max="12" value="' + Math.max(st.dashboard.length, 1) + '" style="width:80px"></label>' +
       '<label class="row small">자동 배정 <select id="assignMode" style="width:auto"><option value="order">번호 순서대로 묶기</option><option value="random">무작위</option></select></label>' +
       '<button class="btn primary" id="btnRoster">명단 저장</button></div>' +
-      '<p class="tiny muted" style="margin-top:8px">같은 번호·같은 팀이면 고른 직책은 유지돼요. 팀 코드는 바뀌지 않아요.</p></div>' +
+      '<p class="tiny muted" style="margin-top:8px">같은 번호·같은 팀이면 고른 직책은 유지돼요. 같은 기후의 팀은 팀 코드·재난·포스터가 그대로 이어져요.</p></div>' +
 
-      '<div class="card"><div class="card-title"><h2>팀 코드</h2><div class="grow"></div>' +
+      '<div class="card"><div class="card-title"><h2>팀 코드·기후</h2><div class="grow"></div>' +
       '<button class="btn sm gold" id="btnShowCodes">📺 크게 보기</button>' +
       '<button class="btn sm danger" id="btnRegenAll">모든 코드 새로 만들기</button></div>' +
-      '<div class="table-wrap"><table class="tbl"><thead><tr><th>팀</th><th>코드</th><th>팀원</th><th></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="tbl"><thead><tr><th>팀</th><th>코드</th><th>기후</th><th>팀원</th><th></th></tr></thead><tbody>' +
       st.dashboard.map(function (t) {
         return '<tr><td><b>' + esc(t.name) + '</b></td><td><b style="font-size:1.2rem;letter-spacing:.12em;color:var(--gold)">' + esc(t.code) + '</b></td>' +
+          '<td><select data-climate="' + esc(t.id) + '"><option value="">— 미정 —</option>' + st.climates.map(function (c) {
+            var other = st.dashboard.filter(function (x) { return x.id !== t.id && x.climate === c.name; })[0];
+            return '<option value="' + esc(c.name) + '" ' + (t.climate === c.name ? 'selected' : '') + (other ? ' disabled' : '') + '>' +
+              esc(c.icon + ' ' + c.name) + (other ? ' (' + esc(other.name) + ')' : '') + '</option>';
+          }).join('') + '</select></td>' +
           '<td class="small">' + t.members.map(function (m) { return esc(m.no + ' ' + m.name); }).join(', ') + '</td>' +
           '<td><button class="btn sm ghost" data-regen="' + esc(t.id) + '">새 코드</button></td></tr>';
       }).join('') + '</tbody></table></div></div>' +
@@ -387,6 +390,13 @@
       var btn = e.currentTarget;
       var ok = await E.confirmBox('모든 팀 코드를 바꿀까요?', '<p>학생들은 새 코드로 다시 로그인해야 해요.</p>', '바꾸기', 'danger solid');
       if (ok) act(btn, 'adminRegenCodes', '').catch(function () {});
+    });
+    $all('[data-climate]', view).forEach(function (el) {
+      el.addEventListener('change', function () {
+        act(null, 'adminSetClimate', el.dataset.climate, el.value)
+          .then(function () { toast(el.value ? '기후를 정했어요: ' + el.value : '기후를 비웠어요.', 'ok'); })
+          .catch(function () { render(); });
+      });
     });
     $all('[data-regen]', view).forEach(function (b) {
       b.addEventListener('click', function () { act(b, 'adminRegenCodes', b.dataset.regen).catch(function () {}); });
@@ -444,7 +454,7 @@
           '<span><span>' + esc(r.icon) + ' ' + esc(r.city) + ' <span class="muted small">' + esc(r.name) + ' · ' + esc(r.climate) + '</span></span>' +
           '<span>🪙 ' + r.coins + ' <span class="muted small">(' + r.investors + '명)</span></span></span></div></div>' +
           (r.reasons.length ? '<div></div><div class="reasons" style="margin:-4px 0 6px">' + r.reasons.slice(0, 6).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '');
-      }).join('') + '</div>' : '<p class="muted">기후를 뽑은 팀이 없어요.</p>') +
+      }).join('') + '</div>' : '<p class="muted">기후가 정해진 팀이 없어요.</p>') +
       '</div>';
   }
 
@@ -531,7 +541,7 @@
       '<p class="small muted">나중에 3D 월드에 건물로 지을 도시를 기록해요. 같은 팀·같은 도시 이름은 한 줄로 갱신돼요.</p>' +
       (st.results.length ? '<div class="row"><select id="worldTeam" style="width:auto;min-width:220px">' + teamOpts(winner && winner.id, st.results.map(function (r) {
         return { id: r.id, name: r.rank + '위 ' + r.name, city: r.city };
-      })) + '</select><button class="btn gold" id="btnWorld">월드에 등록</button></div>' : '<p class="muted">기후를 뽑은 팀이 없어요.</p>') +
+      })) + '</select><button class="btn gold" id="btnWorld">월드에 등록</button></div>' : '<p class="muted">기후가 정해진 팀이 없어요.</p>') +
       (st.world.length ? '<div class="table-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>팀ID</th><th>도시 이름</th><th>기후</th><th>한 줄 소개</th><th>포스터</th><th>득표</th><th>등록일</th></tr></thead><tbody>' +
         st.world.map(function (w) {
           return '<tr><td>' + esc(w.team) + '</td><td><b>' + esc(w.city) + '</b></td><td>' + esc(w.climate) + '</td><td class="small">' + esc(w.intro) + '</td><td>' +

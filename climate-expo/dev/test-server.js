@@ -32,19 +32,27 @@ st.dashboard.forEach((t) => assert.strictEqual(t.members.length, 4));
 const codes = st.dashboard.map((t) => t.code);
 assert.strictEqual(new Set(codes).size, 6);
 
-// 3) 학생 로그인 + 기후 뽑기 (중복 없음)
+// 3) 경매 결과를 "번호,이름,기후"로 입력 → 같은 기후끼리 팀, 팀 코드는 유지
+const CL = ['열대', '건조', '온대', '냉대', '한대', '고산'];
+fails('adminSaveRoster', [tok, '1,가,열대\n2,나,사막', 6, 'order'], /알아볼 수 없/);
+fails('adminSaveRoster', [tok, '1,가,열대\n2,나,', 6, 'order'], /기후가 빠진/);
+const roster2 = ['번호,이름,기후'].concat(Array.from({ length: 24 }, (_, i) => `${i + 1},학생${i + 1},${CL[Math.floor(i / 4)]}${i % 2 ? '팀' : ''}`)).join('\n');
+st = call('adminSaveRoster', tok, roster2, 6, 'order');
+assert.deepStrictEqual(st.dashboard.map((t) => t.climate), CL, '기후별 팀');
+assert.deepStrictEqual(st.dashboard.map((t) => t.name), CL.map((c) => c + '팀'));
+assert.deepStrictEqual(st.dashboard.map((t) => t.code), codes, '팀 코드 유지');
+st.dashboard.forEach((t) => assert.strictEqual(t.members.length, 4));
+// 교사 기후 변경: 겹치면 거절, 비우고 다시 정하기
+fails('adminSetClimate', [tok, 'T1', '건조'], /이미/);
+st = call('adminSetClimate', tok, 'T1', '');
+assert.strictEqual(st.dashboard[0].climate, '');
+st = call('adminSetClimate', tok, 'T1', '열대');
+assert.strictEqual(st.dashboard[0].climate, '열대');
+assert.ok(!g.handle_('drawClimate', []).ok, '학생 뽑기 기능 없음');
 const look = call('lookupTeam', codes[0].toLowerCase());
 assert.strictEqual(look.members.length, 4);
-const drawn = [];
-st.dashboard.forEach((t, i) => {
-  const no = t.members[0].no;
-  call('login', t.code, no);
-  const s = call('drawClimate', t.code, no);
-  drawn.push(s.team.climate);
-  // 다시 뽑아도 그대로
-  assert.strictEqual(call('drawClimate', t.code, no).team.climate, s.team.climate);
-});
-assert.strictEqual(new Set(drawn).size, 6, '기후 중복 없음');
+st.dashboard.forEach((t) => call('login', t.code, t.members[0].no));
+assert.strictEqual(call('state', codes[0], 1).climateInfo.name, '열대');
 
 // 4) 직책: 팀 안 중복 불가
 const t0 = st.dashboard[0];
@@ -87,6 +95,14 @@ s0 = call('drawDisaster', t0.code, t0.members[0].no);
 assert.ok(s0.disaster && (s0.disaster.climate === s0.team.climate || s0.disaster.wild));
 st = call('adminDistributeDisasters', tok);
 assert.ok(st.dashboard.every((t) => t.disaster), '모든 팀 재난 배정');
+// 기후를 바꾸면 그 기후 재난 카드는 비워짐(공통 와일드카드는 유지)
+{
+  const before = call('adminState', tok).dashboard[5];
+  const after = call('adminSetClimate', tok, before.id, '').dashboard[5];
+  assert.ok(!after.disaster || after.disaster.wild);
+  call('adminSetClimate', tok, before.id, before.climate);
+  call('adminSetTeamDisaster', tok, before.id, before.disaster.id);
+}
 fails('saveResponse', [other.code, other.members[0].no, 'survive', '버팀', ''], /잠겨/);
 call('saveResponse', t0.code, t0.members[0].no, 'survive', '물길을 만든다', '');
 call('saveResponse', t0.code, t0.members[1].no, 'fix', '바닥을 더 높였다', '');
