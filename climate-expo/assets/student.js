@@ -638,9 +638,110 @@
     }
   };
 
-  /* ---------- 3단계·4단계·결과 (다음 단계에서 추가) ---------- */
+  /* ---------- 3단계: 재난 ---------- */
 
-  VIEWS.s3 = { render: function () { return lockedPanel('🚧', '준비 중', ''); } };
+  function revealKey() { return 'expo_rev_' + S.st.team.id + '_' + (S.st.disaster ? S.st.disaster.id : ''); }
+  function revealed() { return !!E.store(revealKey()); }
+
+  function disasterFront(d) {
+    return '<div class="ico" style="font-size:2.4rem">🌪️</div><div class="nm">' + esc(d.name) + '</div>' +
+      '<div class="card-tag">' + (d.wild ? '공통 와일드카드' : esc(d.climate) + ' 재난') + '</div>';
+  }
+
+  function disasterDeck(label, attr) {
+    return '<div class="card center"><div class="section-label" style="color:var(--danger)">DISASTER ALERT</div>' +
+      '<h2>🚨 재난 경보가 울렸습니다!</h2><p class="muted">우리 기후의 재난 카드 또는 공통 와일드카드 중 한 장이 나와요.</p>' +
+      '<div class="deck" style="grid-template-columns:minmax(0,220px);margin:16px 0">' +
+      '<div class="flip pickable" id="disCard"><div class="inner"><div class="face back disaster-back"><div class="q">⚠ 재난</div></div>' +
+      '<div class="face front disaster-front"></div></div></div></div>' +
+      '<button class="btn danger solid lg" ' + attr + '>' + label + '</button></div>';
+  }
+
+  function designSummary() {
+    var st = S.st;
+    return '<details class="card flat"><summary style="cursor:pointer;font-weight:800">📐 우리 설계 다시 보기</summary>' +
+      st.roles.map(function (r) {
+        return '<div class="detail-section"><h4>' + r.icon + ' ' + esc(r.name) + '</h4>' +
+          '<p>' + (st.design[r.id + '_what'] ? escBr(st.design[r.id + '_what']) : '<span class="muted">(비어 있음)</span>') + '</p>' +
+          (st.design[r.id + '_why'] ? '<p class="why small">이유: ' + escBr(st.design[r.id + '_why']) + '</p>' : '') + '</div>';
+      }).join('') +
+      '<p style="margin-top:12px"><button class="btn sm" data-go="s2">2단계에서 설계 고치기 ▶</button></p></details>';
+  }
+
+  VIEWS.s3 = {
+    sig: function () { return [stage(3).open, S.st.disaster ? S.st.disaster.id : '', S.st.disaster ? revealed() : ''].join('|'); },
+    render: function () {
+      var st = S.st;
+      if (!stage(3).open) {
+        return '<div class="siren"><div class="bell">🚨</div><h2 style="margin-top:12px">곧 재난이 옵니다</h2>' +
+          '<p class="muted">세계도시연맹 관측소가 이상 신호를 감지했습니다.<br>경보가 울리면 재난 카드가 열립니다.</p>' +
+          '<div class="card flat" style="max-width:480px;margin:18px auto 0;text-align:left"><b>그 전에 점검하기</b>' +
+          '<ul class="small" style="margin:8px 0 0;padding-left:18px">' +
+          '<li>모든 "이유" 칸에 기후 특징(기온·비·바람·계절)이 들어갔나요?</li>' +
+          '<li>우리 기후에서 일어날 수 있는 재난을 하나 떠올려 보세요.</li>' +
+          '<li>그 재난이 오면 우리 도시의 어느 설계가 버텨 줄까요?</li></ul></div></div>';
+      }
+      if (!st.team.climate) return lockedPanel('🃏', '먼저 기후 카드를 뽑아요', '1단계에서 기후를 뽑아야 재난 카드를 받을 수 있어요.');
+      if (!st.disaster) return disasterDeck('재난 카드 뽑기', 'id="btnDrawDis"');
+      if (!revealed()) return disasterDeck('카드 뒤집기', 'id="btnReveal"');
+      var d = st.disaster;
+      return '<div class="card disaster-card"><div class="tag">' + (d.wild ? '⚡ 공통 와일드카드' : '🌪️ ' + esc(d.climate) + ' 기후 재난') + '</div>' +
+        '<h2 style="font-size:1.6rem;margin:6px 0">' + esc(d.name) + '</h2>' +
+        '<p>' + escBr(d.story) + '</p>' +
+        (d.question ? '<div class="question">🤔 ' + esc(d.question) + '</div>' : '') + '</div>' +
+        '<div class="card"><div class="card-title"><h2>🛡️ 우리 도시의 대응</h2><span class="chip">팀 공통</span></div>' +
+        fieldHtml('survive', '우리 도시는 어떻게 버티나', st.response.survive, { rows: 4, placeholder: PLACEHOLDER.survive }) +
+        fieldHtml('fix', '설계에서 고친 점', st.response.fix, { rows: 4, placeholder: PLACEHOLDER.fix }) +
+        '<p class="tiny muted">설계를 실제로 고쳤다면 2단계 칸 내용도 함께 바꿔 주세요.</p></div>' +
+        designSummary();
+    },
+    bind: function (el) {
+      var draw = $('#btnDrawDis', el);
+      if (draw) draw.addEventListener('click', drawDisaster);
+      var rev = $('#btnReveal', el);
+      if (rev) rev.addEventListener('click', function () { flipDisaster(S.st.disaster); });
+      $all('[data-go]', el).forEach(function (b) { b.addEventListener('click', function () { go(b.dataset.go); }); });
+      $all('[data-field]', el).forEach(function (box) {
+        var input = box.querySelector('textarea, input');
+        regField(input, box.dataset.field, S.st.response[box.dataset.field], 'saveResponse', function (k, v) { S.st.response[k] = v; });
+      });
+    },
+    patch: function () { patchFields(S.st.response); }
+  };
+
+  async function flipDisaster(d) {
+    var card = $('#disCard');
+    S.animating = true;
+    var front = card.querySelector('.front');
+    front.innerHTML = disasterFront(d);
+    card.classList.add('flipped');
+    $all('#view button').forEach(function (b) { b.disabled = true; });
+    await wait(1700);
+    E.store(revealKey(), 1);
+    S.animating = false;
+    renderView();
+  }
+
+  async function drawDisaster(e) {
+    var btn = e.currentTarget;
+    var ok = await E.confirmBox('재난 카드를 뽑을까요?', '<p>팀에서 한 명만 눌러 주세요. 한 번 뽑으면 바꿀 수 없어요.</p>', '뽑기', 'danger solid');
+    if (!ok) return;
+    var card = $('#disCard');
+    card.classList.add('shake');
+    try {
+      var st = await E.busy(btn, function () { return sapi('drawDisaster'); });
+      card.classList.remove('shake');
+      S.st = st;
+      renderChrome();
+      await flipDisaster(st.disaster);
+    } catch (err) {
+      card.classList.remove('shake');
+      poll();
+    }
+  }
+
+  /* ---------- 4단계·결과 (다음 단계에서 추가) ---------- */
+
   VIEWS.s4 = { render: function () { return lockedPanel('🚧', '준비 중', ''); } };
   VIEWS.results = { render: function () { return lockedPanel('🚧', '준비 중', ''); } };
 

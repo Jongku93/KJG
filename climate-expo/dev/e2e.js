@@ -94,10 +94,32 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(1200);
   await a.screenshot({ path: `${out}/st-s2.png`, fullPage: true });
   await b.screenshot({ path: `${out}/st-s2-mobile.png`, fullPage: true });
+  const extra = {};
+  if (upto >= 3) {
+    // 3단계: 잠김 예고 → 열림 → 뽑기 → 다른 팀원은 뒤집기
+    await a.click('[data-view=s3]');
+    await a.screenshot({ path: `${out}/st-s3-teaser.png` });
+    await api('adminSetSetting', tok, 'STAGE3_OPEN', true);
+    for (const p of pages) { await p.reload(); await p.waitForSelector('#tabs'); await p.click('[data-view=s3]'); }
+    await a.click('#btnDrawDis');
+    await a.click('.modal .btn.danger');
+    await sleep(800);
+    await a.screenshot({ path: `${out}/st-s3-flip.png` });
+    await a.waitForSelector('#f-survive', { timeout: 8000 });
+    await b.reload(); await b.waitForSelector('#tabs'); await b.click('[data-view=s3]');
+    await b.click('#btnReveal');
+    await b.waitForSelector('#f-survive', { timeout: 8000 });
+    await a.fill('#f-survive', '바닥을 높인 집 덕분에 물이 들어오지 않고, 비가 많아도 빗물 저장 탱크로 모은다.');
+    await b.fill('#f-fix', '교통·안전: 높은 다리 길을 하나 더 만들었다.');
+    await a.click('#f-fix'); await b.click('#f-survive');
+    await sleep(1500);
+    await a.screenshot({ path: `${out}/st-s3.png`, fullPage: true });
+    extra.s3done = (await api('state', team.code, team.members[0].no)).stages[2].done;
+  }
   st = await api('adminState', tok);
   const design = st.dashboard[0].design;
   console.log(JSON.stringify({
-    readonlyForOthers: ro, seenByB: seen, intro: design.intro, city: design.city_name, errors
+    readonlyForOthers: ro, seenByB: seen, ...extra, intro: design.intro, city: design.city_name, errors
   }, null, 1));
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });
