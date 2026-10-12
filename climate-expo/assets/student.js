@@ -930,7 +930,26 @@
 
   /* ---------- 시작 ---------- */
 
+  /* 그로스포인트 월드 엑스포관에서 온 개인 링크: 주소 끝 #c=팀코드&n=번호 → 그 학생으로 바로 로그인.
+     주소창에서는 곧바로 지움(코드가 화면 · 방문 기록에 남지 않게). 코드나 번호가 틀리면 예전처럼 로그인 화면으로.
+     엑스포가 끝나 이 기능을 뺄 때는 이 함수와 boot() 첫 줄만 지우면 됨. */
+  function sessionFromLink() {
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (!/(^|&)c=/.test(h)) return;
+    var p = {};
+    h.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) { try { p[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { /* 깨진 글자는 무시 */ } }
+    });
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+    var code = String(p.c || '').trim().toUpperCase(), no = String(p.n || '').trim();
+    if (!/^[A-Z0-9]{2,8}$/.test(code) || !/^\d{1,3}$/.test(no)) return;
+    S.session = { code: code, no: no };   // 공용 컴퓨터에 앞 학생 로그인이 남아 있어도 이 링크의 학생으로 바뀜
+    E.store('expo_session', S.session);
+  }
+
   async function boot() {
+    sessionFromLink();
     if (!S.session) { renderLogin(); return; }
     try {
       S.st = await sapi('state');
@@ -945,4 +964,10 @@
     }
   }
   boot();
+  // 이미 열린 이 화면에 개인 링크가 다시 들어오면(주소 끝만 바뀌어 새로 읽지 않는 경우) 그 학생으로 다시 시작
+  window.addEventListener('hashchange', function () {
+    if (!/(^|&)c=/.test(String(location.hash || '').replace(/^#/, ''))) return;
+    clearInterval(S.timer); S.st = null; S.view = 'board';
+    boot();
+  });
 })();
