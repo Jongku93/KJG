@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>직책별 설계 지도 가이드 · 2050 기후 도시 엑스포</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .climate-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+    .climate-pick button { border: 1px solid var(--line); background: var(--bg2); color: var(--text); border-radius: 999px; padding: 8px 16px; font-weight: 800; cursor: pointer; }
+    .climate-pick button.on { background: var(--c); border-color: var(--c); color: #fff; }
+    .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .role-grid > .card { margin-top: 0; }
+    .tp li { margin: 6px 0; font-weight: 700; }
+    .rubric td:first-child { white-space: nowrap; font-weight: 800; color: var(--gold); }
+    @media (max-width: 860px) { .role-grid { grid-template-columns: 1fr; } }
+    @media print {
+      :root { --text: #111; --muted: #444; --dim: #555; --accent: #0b7a6e; --gold: #8a5a00; --line: #bbb; --card: #fff; --card2: #fff; --bg2: #fff; }
+      body { background: #fff !important; color: #111; font-size: 12px; }
+      .no-print { display: none !important; }
+      .card { box-shadow: none; background: #fff !important; border: 1px solid #bbb; break-inside: avoid; }
+      .guide .ex, .guide-mission, .question { background: #f5f5f5 !important; }
+      .role-grid { grid-template-columns: 1fr 1fr; }
+      .wrap { max-width: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="row between" style="margin:8px 0 14px">
+      <div>
+        <div class="section-label">TEACHER GUIDE</div>
+        <h1 style="margin:0;font-size:clamp(1.4rem,4vw,2rem)">직책별 설계 지도 가이드</h1>
+        <p class="muted" style="margin:4px 0 0">기후를 고르면 그 기후에 맞춘 질문으로 바뀌어요. 화면에 띄우거나 인쇄해서 쓰세요. 학생 앱 2단계의 [📘 가이드]와 같은 내용이에요.</p>
+      </div>
+      <div class="row no-print">
+        <button class="btn" onclick="window.print()">🖨️ 인쇄</button>
+        <a class="btn ghost" href="admin.html">교사 화면</a>
+      </div>
+    </div>
+    <div class="card no-print"><div class="climate-pick" id="pick"></div></div>
+    <div id="out"></div>
+  </main>
+  <script src="assets/guide-data.js"></script>
+  <script src="assets/guide-view.js"></script>
+  <script>
+    (function () {
+      var CL = [['열대', '🌴', '#22a06b'], ['건조', '🏜️', '#e0a030'], ['온대', '🍃', '#2f9be0'], ['냉대', '🌲', '#5b6cf0'], ['한대', '❄️', '#3cc0d8'], ['고산', '🏔️', '#9b6be0']];
+      var ROLES = [['housing', '🏠', '주거·건축'], ['energy', '⚡', '에너지·물'], ['food', '🌾', '식량'], ['transport', '🚇', '교통·안전']];
+      var G = window.EXPO_GUIDE;
+      var cur = '열대';
+      try { cur = (new URLSearchParams(location.search).get('c')) || localStorage.getItem('expo_guide_c') || '열대'; } catch (e) { /* */ }
+      function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+      function draw() {
+        document.getElementById('pick').innerHTML = CL.map(function (c) {
+          return '<button class="' + (c[0] === cur ? 'on' : '') + '" style="--c:' + c[2] + '" data-c="' + c[0] + '">' + c[1] + ' ' + c[0] + '</button>';
+        }).join('');
+        var c = CL.filter(function (x) { return x[0] === cur; })[0];
+        var html = '<h2 style="margin:18px 0 10px">' + c[1] + ' ' + esc(cur) + ' 기후 · 직책별 가이드</h2><div class="role-grid">' +
+          ROLES.map(function (r) {
+            return '<div class="card"><div class="card-title"><span style="font-size:1.5rem">' + r[1] + '</span><h3 style="margin:0">' + r[2] + '</h3></div>' +
+              ExpoGuide.html(r[0], { climate: cur, checks: false }) + '</div>';
+          }).join('') + '</div>' +
+          '<h2 style="margin:22px 0 10px">팀 공통 칸</h2><div class="role-grid">' +
+          ['basic', 'tradition', 'ai'].map(function (k) {
+            return '<div class="card"><div class="card-title"><h3 style="margin:0">' + esc(G.common[k].title) + '</h3></div>' + ExpoGuide.html(k, { climate: cur }) + '</div>';
+          }).join('') +
+          '<div class="card"><div class="card-title"><h3 style="margin:0">✅ 학생 스스로 점검 (모든 직책)</h3></div><ul class="guide checklist" style="list-style:none;padding-left:0">' +
+          G.checks.map(function (x) { return '<li style="padding-left:24px;position:relative"><span style="position:absolute;left:2px">☐</span>' + esc(x) + '</li>'; }).join('') + '</ul></div>' +
+          '</div>' +
+          '<h2 style="margin:22px 0 10px">교사용</h2><div class="role-grid">' +
+          '<div class="card"><div class="card-title"><h3 style="margin:0">🗣️ 순회 지도 발문</h3></div><ol class="tp">' + G.teacherPrompts.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div>' +
+          '<div class="card"><div class="card-title"><h3 style="margin:0">📏 "이유" 칸 평가 기준</h3></div><table class="tbl rubric"><tbody>' +
+          G.rubric.map(function (x) { return '<tr><td>' + esc(x.level) + '</td><td>' + esc(x.d) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+          '</div>';
+        document.getElementById('out').innerHTML = html;
+      }
+      document.getElementById('pick').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-c]');
+        if (!b) return;
+        cur = b.dataset.c;
+        try { localStorage.setItem('expo_guide_c', cur); } catch (err) { /* */ }
+        draw();
+      });
+      draw();
+    })();
+  </script>
+</body>
+</html>

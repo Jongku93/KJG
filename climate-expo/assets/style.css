@@ -415,3 +415,18 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- 직책 가이드 ---------- */
+.guide h4 { margin: 16px 0 6px; color: var(--accent); font-size: .98rem; }
+.guide ul, .guide ol { margin: 0; padding-left: 20px; }
+.guide li { margin: 4px 0; }
+.guide-mission { font-weight: 700; background: rgba(56, 214, 196, .08); border: 1px solid rgba(56, 214, 196, .3); border-radius: 12px; padding: 10px 14px; margin: 0; }
+.guide-steps b { color: var(--gold); margin-right: 4px; }
+.guide-q li { font-weight: 700; }
+.guide .ex { border-left: 4px solid var(--line); background: rgba(0, 0, 0, .2); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+.guide .ex.good { border-left-color: var(--ok); }
+.guide .ex.weak { border-left-color: var(--warn); }
+.guide .checklist { list-style: none; padding-left: 0; }
+.guide .checklist li { padding-left: 26px; position: relative; }
+.guide .checklist li::before { content: '☐'; position: absolute; left: 2px; color: var(--accent); }
+.guide-btn { margin-left: 6px; }

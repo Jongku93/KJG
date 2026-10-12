@@ -125,6 +125,7 @@
         '<div class="who">' +
         '<button class="btn sm ghost" id="btnRefresh" title="새로고침">⟳<span class="hide-sm"> 새로고침</span></button>' +
         '<a class="btn sm ghost hide-sm" href="index.html" target="_blank" rel="noopener">학생 화면</a>' +
+        '<a class="btn sm ghost" href="guide.html" target="_blank" rel="noopener">📘<span class="hide-sm"> 지도 가이드</span></a>' +
         '<button class="btn sm ghost" id="btnLogout">로그아웃</button>' +
         '</div></div>' +
         '<nav class="tabs" id="tabs"></nav></header>' +

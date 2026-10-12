@@ -110,6 +110,21 @@
     window.scrollTo(0, 0);
   }
 
+  function guideBtn(key, strong) {
+    if (!window.ExpoGuide) return '';
+    return '<button type="button" class="btn sm ' + (strong ? 'gold' : 'ghost') + ' guide-btn" data-guide="' + key + '">📘 ' + (strong ? '내 직책 가이드' : '가이드') + '</button>';
+  }
+
+  function openGuide(key) {
+    var c = S.st.climateInfo;
+    E.modal({
+      title: ExpoGuide.title(key, S.st.roles) + (c ? ' · ' + c.icon + ' ' + c.name + ' 기후' : ''),
+      html: ExpoGuide.html(key, { climate: c ? c.name : '', life: c ? c.life : '' }),
+      wide: true,
+      buttons: [{ label: '닫기', value: true, cls: 'primary' }]
+    });
+  }
+
   /* ---------- 로그인 ---------- */
 
   function renderLogin() {
@@ -164,6 +179,10 @@
     $('#tabs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-view]');
       if (b) go(b.dataset.view);
+    });
+    $('#view').addEventListener('click', function (e) {
+      var g = e.target.closest('[data-guide]');
+      if (g) { e.preventDefault(); e.stopPropagation(); openGuide(g.dataset.guide); }
     });
     $('#who').addEventListener('click', async function (e) {
       if (!e.target.closest('#btnLogout')) return;
@@ -363,7 +382,8 @@
         }
         return '<div class="role ' + (mine ? 'mine' : (h ? 'taken' : '')) + '"><div class="ico">' + r.icon + '</div>' +
           '<b>' + esc(r.name) + '</b><span class="small muted">' + esc(r.hint) + '</span>' +
-          '<span class="holder ' + (h ? '' : 'empty') + '">' + (h ? esc(h.name) + (mine ? ' (나)' : '') : '비어 있음') + '</span>' + btn + '</div>';
+          '<span class="holder ' + (h ? '' : 'empty') + '">' + (h ? esc(h.name) + (mine ? ' (나)' : '') : '비어 있음') + '</span>' +
+          (window.ExpoGuide ? '<button type="button" class="btn sm ghost" data-guide="' + r.id + '">📘 무슨 일을 하나요?</button>' : '') + btn + '</div>';
       }).join('') + '</div></div>';
   }
 
@@ -537,7 +557,7 @@
         '<div id="progBox">' + progressHtml() + '</div>' +
         '<p class="tiny muted" style="margin:8px 0 0">글은 쓰는 도중에 자동으로 저장돼요. 내 직책 칸은 나만, 팀 공통 칸은 누구나 고칠 수 있어요.</p></div>' +
 
-        '<div class="card"><div class="card-title"><h2>🏙️ 도시 소개</h2><span class="chip">팀 공통</span></div><div class="two">' +
+        '<div class="card"><div class="card-title"><h2>🏙️ 도시 소개</h2><span class="chip">팀 공통</span>' + guideBtn('basic') + '</div><div class="two">' +
         fieldHtml('city_name', '도시 이름', st.design.city_name, { input: true, max: f('city_name').max, placeholder: PLACEHOLDER.city_name }) +
         fieldHtml('intro', '한 줄 소개', st.design.intro, { input: true, max: f('intro').max, placeholder: PLACEHOLDER.intro }) +
         '</div></div>' +
@@ -549,21 +569,21 @@
           var owner = h ? '✏️ ' + h.name + ' 담당' : '';
           return '<div class="card role-card ' + (mine ? 'mine' : '') + '"><div class="card-title"><span style="font-size:1.6rem">' + r.icon + '</span>' +
             '<div><h3 style="margin:0">' + esc(r.name) + '</h3><div class="tiny muted">' + esc(r.hint) + '</div></div>' +
-            '<span class="owner chip ' + (mine ? 'accent' : '') + '">' + (h ? esc(h.name) + (mine ? ' (나)' : '') : '담당 없음 · 누구나') + '</span></div>' +
+            '<span class="owner chip ' + (mine ? 'accent' : '') + '">' + (h ? esc(h.name) + (mine ? ' (나)' : '') : '담당 없음 · 누구나') + '</span>' + guideBtn(r.id, mine) + '</div>' +
             '<div class="two">' +
             fieldHtml(r.id + '_what', '무엇을 만들었나', st.design[r.id + '_what'], { readonly: ro, owner: owner, placeholder: PLACEHOLDER[r.id + '_what'] }) +
             fieldHtml(r.id + '_why', '이 기후라서 이렇게 한 이유', st.design[r.id + '_why'], { readonly: ro, owner: owner, kind: 'why', placeholder: PLACEHOLDER.why }) +
             '</div></div>';
         }).join('') +
 
-        '<div class="card"><div class="card-title"><h2>🏺 전통 생활 계승</h2><span class="chip">팀 공통</span></div>' +
+        '<div class="card"><div class="card-title"><h2>🏺 전통 생활 계승</h2><span class="chip">팀 공통</span>' + guideBtn('tradition') + '</div>' +
         (c.life ? '<div class="question small" style="margin:0 0 12px">힌트 · ' + esc(c.name) + ' 기후의 전통 생활: ' + esc(c.life) + '</div>' : '') +
         '<div class="two">' +
         fieldHtml('tradition_keep', '전통 생활에서 계승한 것 1개', st.design.tradition_keep, { placeholder: PLACEHOLDER.tradition_keep }) +
         fieldHtml('tradition_future', '미래식으로 바꾼 방법', st.design.tradition_future, { placeholder: PLACEHOLDER.tradition_future }) +
         '</div></div>' +
 
-        '<div class="card"><div class="card-title"><h2>🤖 AI 사용 기록</h2><span class="chip">팀 공통</span></div>' +
+        '<div class="card"><div class="card-title"><h2>🤖 AI 사용 기록</h2><span class="chip">팀 공통</span>' + guideBtn('ai') + '</div>' +
         '<p class="small muted">AI 답을 그대로 옮기지 말고, 우리가 확인하고 고친 점을 적어요.</p><div class="two">' +
         fieldHtml('ai_question', 'AI에게 한 질문 1개', st.design.ai_question, { placeholder: PLACEHOLDER.ai_question }) +
         fieldHtml('ai_fix', '우리가 고친 것 1개', st.design.ai_fix, { placeholder: PLACEHOLDER.ai_fix }) +
