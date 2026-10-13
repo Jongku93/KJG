@@ -43,7 +43,11 @@ function apiAdminState(token) {
     roles: ROLES,
     designFields: DESIGN_FIELDS,
     responseFields: RESPONSE_FIELDS,
-    dashboard: buildDashboard_(ctx),
+    dashboard: buildDashboard_(ctx).map(function (d) {
+      var t = ctx.teams.filter(function (x) { return x.id === d.id; })[0] || {};
+      d.fb2 = String(t.fb2 || ''); d.fb3 = String(t.fb3 || '');
+      return d;
+    }),
     unassigned: ctx.students.filter(function (st) {
       return !ctx.teams.some(function (t) { return t.id === st.team; });
     }).map(function (st) { return { no: st.no, name: st.name, team: st.team }; }),
@@ -238,6 +242,24 @@ function apiAdminSetOverride(token, teamId, n, value) {
   return apiAdminState(token);
 }
 
+/** 교사 피드백 저장: stage 2(설계) 또는 3(재난 대응) */
+function apiAdminSetFeedback(token, teamId, stage, text) {
+  requireAdmin_(token);
+  var key = Number(stage) === 2 ? 'fb2' : Number(stage) === 3 ? 'fb3' : '';
+  if (!key) throw new Error('단계 번호가 올바르지 않아요.');
+  withLock_(function () {
+    var team = readTableFresh_('Teams').filter(function (t) { return t.id === teamId; })[0];
+    if (!team) throw new Error('팀을 찾을 수 없어요.');
+    var obj = {};
+    obj[key] = clip_(text, 1000);
+    setCells_('Teams', team._row, obj);
+    bump_('Teams');
+  });
+  var st = apiAdminState(token);
+  st.message = '피드백을 저장했어요. 학생 화면에 곧 보여요.';
+  return st;
+}
+
 /* ---------- 기후·재난 ---------- */
 
 /** 팀 기후 정하기(경매 결과 입력). '' = 비우기. 다른 팀과 겹치면 안 됨 */
@@ -390,7 +412,7 @@ function apiAdminResetAll(token, confirmWord, includeRoster) {
       appendObjs_('Teams', rows);
     } else {
       readTableFresh_('Teams').forEach(function (t) {
-        setCells_('Teams', t._row, { climate: '', disaster: '', poster: '', s1: '', s2: '', s3: '', s4: '', updated: '' });
+        setCells_('Teams', t._row, { climate: '', disaster: '', poster: '', s1: '', s2: '', s3: '', s4: '', updated: '', fb2: '', fb3: '' });
       });
       readTableFresh_('Students').forEach(function (s) {
         setCells_('Students', s._row, { role: '', lastSeen: '' });

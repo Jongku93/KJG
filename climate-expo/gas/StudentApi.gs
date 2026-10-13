@@ -72,6 +72,7 @@ function buildStudentState_(ctx, team, student) {
     me: { no: me.no, name: me.name, role: me.role },
     team: {
       id: team.id, name: team.name, climate: team.climate, poster: team.poster || '',
+      fb2: String(team.fb2 || ''), fb3: String(team.fb3 || ''),
       members: st.members
     },
     climateInfo: climateOf_(ctx, team.climate),

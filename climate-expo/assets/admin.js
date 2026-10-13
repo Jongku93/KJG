@@ -229,7 +229,8 @@
       '<div class="small muted" style="margin-top:8px">' +
       (t.disaster ? '🌪️ ' + esc(t.disaster.name) : '재난 카드 없음') +
       (t.poster ? ' · <a href="' + esc(t.poster) + '" target="_blank" rel="noopener">포스터 열기</a>' : '') + '</div>' +
-      '<div style="margin-top:10px"><button class="btn sm" data-detail="' + esc(t.id) + '">설계 전체 보기</button></div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn sm" data-detail="' + esc(t.id) + '">설계 보기 · 피드백</button>' +
+      (t.fb2 ? '<span class="chip ok">2단계 피드백 ✓</span>' : '') + (t.fb3 ? '<span class="chip ok">3단계 피드백 ✓</span>' : '') + '</div>' +
       '</div>';
   }
 
@@ -248,7 +249,23 @@
       '<div class="detail-section"><h4>🌪️ 재난: ' + esc(t.disaster ? t.disaster.name : '없음') + '</h4>' +
       '<p><b>버티는 방법</b> ' + (t.response.survive ? escBr(t.response.survive) : '<span class="muted">(비어 있음)</span>') + '</p>' +
       '<p><b>고친 점</b> ' + (t.response.fix ? escBr(t.response.fix) : '<span class="muted">(비어 있음)</span>') + '</p></div>';
-    E.modal({ title: t.name + ' 설계 기록', html: html, wide: true, buttons: [{ label: '닫기', value: true }] });
+    var fbBox = function (n, label, v) {
+      return '<div class="detail-section"><h4>👩‍🏫 ' + label + '</h4>' +
+        '<textarea id="fb' + n + '" rows="3" maxlength="1000" placeholder="잘한 점 1가지 + 고칠 점 1가지 (예: 이유에 기후 특징이 잘 들어갔어요. 교통 칸에도 기후 이유를 넣어 보세요.)">' + esc(v) + '</textarea>' +
+        '<div class="row" style="margin-top:6px"><button class="btn sm primary" data-fb="' + n + '">' + label + ' 저장</button><span class="tiny muted">저장하면 학생 ' + n + '단계 화면 맨 위에 보여요.</span></div></div>';
+    };
+    html += fbBox(2, '2단계 설계 피드백', t.fb2) + fbBox(3, '3단계 재난 대응 피드백', t.fb3);
+    E.modal({
+      title: t.name + ' 설계 기록', html: html, wide: true, buttons: [{ label: '닫기', value: true }],
+      onOpen: function (bg) {
+        $all('[data-fb]', bg).forEach(function (b) {
+          b.addEventListener('click', function () {
+            var n = Number(b.dataset.fb);
+            act(b, 'adminSetFeedback', t.id, n, bg.querySelector('#fb' + n).value).catch(function () {});
+          });
+        });
+      }
+    });
   }
 
   /* ---------- 단계·재난 ---------- */

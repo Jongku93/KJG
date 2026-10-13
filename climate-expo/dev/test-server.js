@@ -83,6 +83,12 @@ s0 = call('state', t0.code, t0.members[0].no);
 assert.ok(s0.stages[1].done, '2단계 완료');
 assert.strictEqual(s0.design.housing_what, '3/4 내용 housing_what', '날짜로 바뀌지 않음');
 
+// 5-1) 교사 피드백
+st = call('adminSetFeedback', tok, t0.id, 2, '이유에 기후 특징이 잘 들어갔어요.');
+assert.strictEqual(st.dashboard[0].fb2, '이유에 기후 특징이 잘 들어갔어요.');
+assert.strictEqual(call('state', t0.code, t0.members[1].no).team.fb2, '이유에 기후 특징이 잘 들어갔어요.');
+fails('adminSetFeedback', [tok, t0.id, 4, 'x'], /단계/);
+
 // 6) 팀별 단계 덮어쓰기
 call('adminSetOverride', tok, t0.id, 3, '열림');
 s0 = call('state', t0.code, t0.members[0].no);

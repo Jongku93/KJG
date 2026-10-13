@@ -27,6 +27,7 @@ function routes_() {
     adminSetSetting: apiAdminSetSetting,
     adminSetOverride: apiAdminSetOverride,
     adminSetClimate: apiAdminSetClimate,
+    adminSetFeedback: apiAdminSetFeedback,
     adminDistributeDisasters: apiAdminDistributeDisasters,
     adminSetTeamDisaster: apiAdminSetTeamDisaster,
     adminSaveCard: apiAdminSaveCard,

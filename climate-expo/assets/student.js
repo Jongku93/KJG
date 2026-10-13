@@ -100,6 +100,11 @@
     if (!c) return '<span class="chip">기후 미정</span>';
     return '<span class="climate-badge" style="--c:' + esc(c.color) + '">' + esc(c.icon) + ' ' + esc(c.name) + '</span>';
   }
+  function feedbackCard(text, n) {
+    if (!String(text || '').trim()) return '';
+    return '<div class="card" style="border-color:var(--gold);box-shadow:0 0 0 2px rgba(247,197,77,.2)">' +
+      '<div class="card-title"><h2>👩‍🏫 선생님 피드백</h2><span class="chip">' + n + '단계</span></div><p style="margin:0">' + escBr(text) + '</p></div>';
+  }
   function lockedPanel(icon, title, msg) {
     return '<div class="card locked-panel"><div class="big">' + icon + '</div><h2>' + esc(title) + '</h2><p class="muted">' + msg + '</p></div>';
   }
@@ -204,7 +209,8 @@
     var tabs = [['mission', '📜 미션'], ['board', '🧭 진행판']];
     STAGES.forEach(function (s) {
       var stg = stage(s.n);
-      tabs.push(['s' + s.n, s.n + ' ' + s.name + (stg.done ? ' ✓' : (stg.open ? '' : ' <span class="lock">🔒</span>')),
+      var fb = (s.n === 2 && st.team.fb2) || (s.n === 3 && st.team.fb3) ? ' 💬' : '';
+      tabs.push(['s' + s.n, s.n + ' ' + s.name + (stg.done ? ' ✓' : (stg.open ? '' : ' <span class="lock">🔒</span>')) + fb,
         s.n === 3 && stg.open && !stg.done ? 'alert' : '']);
     });
     if (st.results) tabs.push(['results', '🏆 결과']);
@@ -544,7 +550,7 @@
 
   VIEWS.s2 = {
     sig: function () {
-      return [stage(2).open, S.st.team.climate, S.st.me.role, S.st.team.members.map(function (m) { return m.role; }).join(',')].join('|');
+      return [stage(2).open, S.st.team.climate, S.st.me.role, S.st.team.members.map(function (m) { return m.role; }).join(','), S.st.team.fb2].join('|');
     },
     render: function () {
       var st = S.st, c = st.climateInfo;
@@ -552,7 +558,7 @@
       if (!c) return lockedPanel('🗺️', '아직 우리 팀 기후가 정해지지 않았어요', '선생님이 기후를 입력하면 설계를 시작할 수 있어요.');
       var f = function (key) { return st.designFields.filter(function (x) { return x.key === key; })[0]; };
       var order = st.roles.slice().sort(function (a, b) { return (b.id === st.me.role) - (a.id === st.me.role); });
-      return '<div class="card"><div class="design-head">' + climateBadge(c) +
+      return feedbackCard(st.team.fb2, 2) + '<div class="card"><div class="design-head">' + climateBadge(c) +
         '<div class="grow"><b>우리 기후: ' + esc(c.desc) + '</b><div class="small muted">모든 "이유" 칸에 이 기후의 특징(기온·비·바람·계절 등)이 들어가야 해요.</div></div></div>' +
         '<div id="progBox">' + progressHtml() + '</div>' +
         '<p class="tiny muted" style="margin:8px 0 0">글은 쓰는 도중에 자동으로 저장돼요. 내 직책 칸은 나만, 팀 공통 칸은 누구나 고칠 수 있어요.</p></div>' +
@@ -641,7 +647,7 @@
   }
 
   VIEWS.s3 = {
-    sig: function () { return [stage(3).open, S.st.disaster ? S.st.disaster.id : '', S.st.disaster ? revealed() : ''].join('|'); },
+    sig: function () { return [stage(3).open, S.st.disaster ? S.st.disaster.id : '', S.st.disaster ? revealed() : '', S.st.team.fb3].join('|'); },
     render: function () {
       var st = S.st;
       if (!stage(3).open) {
@@ -657,7 +663,7 @@
       if (!st.disaster) return disasterDeck('재난 카드 뽑기', 'id="btnDrawDis"');
       if (!revealed()) return disasterDeck('카드 뒤집기', 'id="btnReveal"');
       var d = st.disaster;
-      return '<div class="card disaster-card"><div class="tag">' + (d.wild ? '⚡ 공통 와일드카드' : '🌪️ ' + esc(d.climate) + ' 기후 재난') + '</div>' +
+      return feedbackCard(st.team.fb3, 3) + '<div class="card disaster-card"><div class="tag">' + (d.wild ? '⚡ 공통 와일드카드' : '🌪️ ' + esc(d.climate) + ' 기후 재난') + '</div>' +
         '<h2 style="font-size:1.6rem;margin:6px 0">' + esc(d.name) + '</h2>' +
         '<p>' + escBr(d.story) + '</p>' +
         (d.question ? '<div class="question">🤔 ' + esc(d.question) + '</div>' : '') + '</div>' +
