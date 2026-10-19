@@ -95,6 +95,10 @@ function seedSheet_(name, sh, created) {
     var add = defaultSettings_().filter(function (r) { return !have[r[0]]; })
       .map(function (r) { return { key: r[0], value: r[1], note: r[2] }; });
     appendObjs_('Settings', add);
+    // 2026-10-v3: 우승 상금 1위 20점 → 15점 (교사가 바꾸지 않은 기본값일 때만)
+    readTableFresh_('Settings').forEach(function (r) {
+      if (r.key === 'POINT_WIN_1' && Number(r.value) === 20) setCells_('Settings', r._row, { value: 15 });
+    });
     return;
   }
   if (!created && sh.getLastRow() > 1) return;

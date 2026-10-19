@@ -127,26 +127,53 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await a.click('[data-city=T1]');
     await a.screenshot({ path: `${out}/st-s4-detail.png` });
     await a.click('.modal .btn.ghost');
+    // 배움 1: 기준 입력 → 배움 2: 심사표(발표 들으며 ◎○△·메모)
+    await api('adminSetSetting', tok, 'REVIEW_CRITERIA', '기후 맞춤 (이 기후라서 이렇게 지었나)\n재난 대비 (재난을 버티는 근거가 있나)\n전통 계승과 미래 기술 (전통의 원리를 발전시켰나)');
+    await api('adminSetSetting', tok, 'REVIEW_OPEN', true);
+    for (const p of pages.slice(0, 2)) { await p.reload(); await p.waitForSelector('#tabs'); await p.click('[data-view=s4]'); await p.click('[data-sub=vote]'); }
+    const MK = ['◎', '○', '△'];
+    const cards = await a.$$('.review-card');
+    for (let k = 0; k < cards.length; k++) {
+      for (let i = 0; i < 3; i++) await (await cards[k].$(`.mk[data-i="${i}"][data-m="${MK[(i + k) % 3]}"]`)).click();
+      await (await cards[k].$('.memo')).fill('질문: 재난이 오면 어디로 대피하나요?');
+    }
+    await a.screenshot({ path: `${out}/st-s4-review.png`, fullPage: true });
+    await (await b.$('.review-card .mk[data-m="◎"]')).click();
+    await b.screenshot({ path: `${out}/st-s4-review-mobile.png`, fullPage: true });
+    // 배움 3: 투표 열기 → 1차 투자(일부만) → 추가 투자
     await api('adminSetSetting', tok, 'VOTING_OPEN', true);
-    for (const p of pages) { await p.reload(); await p.waitForSelector('#tabs'); await p.click('[data-view=s4]'); await p.click('[data-sub=vote]'); }
-    // a: T2에 7, T3에 3
-    for (let i = 0; i < 7; i++) await a.click('[data-team=T2] [data-step="1"]');
-    for (let i = 0; i < 3; i++) await a.click('[data-team=T3] [data-step="1"]');
-    await a.fill('[data-team=T2] .reason', '사막의 물 부족을 잘 해결했어요');
+    await a.reload(); await a.waitForSelector('#tabs'); await a.click('[data-view=s4]'); await a.click('[data-sub=vote]');
+    for (const c of await a.$$('.review-card')) await (await c.$('.reason')).fill('이 기후라서 비를 피하는 설계를 했기 때문에');
+    for (let i = 0; i < 6; i++) await a.click('.review-card[data-team=T2] [data-step="1"]');
+    await a.click('.review-card[data-team=T3] [data-step="1"]');
     await a.screenshot({ path: `${out}/st-s4-vote.png`, fullPage: true });
-    await b.click('[data-team=T2] [data-step="1"]');
-    await b.screenshot({ path: `${out}/st-s4-vote-mobile.png`, fullPage: true });
-    extra.voteBtnDisabledPartial = await b.$eval('#btnVote', (el) => el.disabled);
+    extra.partialSubmitAllowed = !(await a.$eval('#btnVote', (el) => el.disabled));
     await a.click('#btnVote');
+    await a.waitForSelector('.modal'); await sleep(300);
+    await a.screenshot({ path: `${out}/st-s4-confirm.png` });
     await a.click('.modal .btn.gold');
-    await sleep(1200);
-    extra.aVoted = (await api('state', team.code, team.members[0].no)).vote.done;
-    // 나머지 학생은 API로 투표
+    await a.waitForSelector('.topup-card', { timeout: 8000 }); await sleep(400);
+    await a.screenshot({ path: `${out}/st-s4-topup.png`, fullPage: true });
+    for (let i = 0; i < 3; i++) await a.click('.topup-card[data-team=T4] [data-step="1"]');
+    await a.fill('.topup-card[data-team=T4] .reason2', '온대 기후라서 태풍 대비 대피로를 만들었기 때문에');
+    await a.screenshot({ path: `${out}/st-s4-topup-filled.png`, fullPage: true });
+    await a.click('#btnTopUp'); await a.click('.modal .btn.gold');
+    await sleep(1500);
+    await a.screenshot({ path: `${out}/st-s4-done.png`, fullPage: true });
+    extra.aDone = (await api('state', team.code, team.members[0].no)).vote.done;
+    // 나머지 학생은 API로 심사·투자
     st = await api('adminState', tok);
+    const items = (t, alloc) => {
+      const o = {};
+      st.dashboard.filter((x) => x.id !== t.id).forEach((x, k) => {
+        o[x.id] = { marks: [MK[k % 3], MK[(k + 1) % 3], MK[0]], memo: '', coins: alloc[x.id] || 0, reason: x.climate + ' 기후라서 ' + ['물길을 냈기', '바닥을 띄웠기', '그늘을 만들었기'][k % 3] + ' 때문에' };
+      });
+      return o;
+    };
     for (const t of st.dashboard) for (const m of t.members) {
       if (m.voted) continue;
       const target = t.id === 'T1' ? { T2: 5, T4: 5 } : { T1: 6, [t.id === 'T5' ? 'T6' : 'T5']: 4 };
-      await api('submitVote', t.code, m.no, target, { T1: '비 많은 기후에 딱 맞는 높은 집' });
+      await api('submitReview', t.code, m.no, items(t, target));
     }
     await api('adminSetSetting', tok, 'RESULTS_PUBLIC', true);
     await a.reload(); await a.waitForSelector('#tabs');
@@ -157,6 +184,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await b.screenshot({ path: `${out}/st-results-mobile.png`, fullPage: true });
     await b.click('[data-view=board]');
     await b.screenshot({ path: `${out}/st-board-mobile.png`, fullPage: true });
+    const adm = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+    adm.on('pageerror', (e) => errors.push('ADMIN: ' + e.message));
+    await adm.goto(base + '/admin.html'); await adm.fill('#pin', '1234'); await adm.click('#pinForm button'); await adm.waitForSelector('#adminShell');
+    await adm.click('[data-tab=vote]'); await sleep(400);
+    await adm.evaluate(() => document.querySelectorAll('details').forEach((d, i) => { if (i === 0 || i === 6) d.open = true; }));
+    await adm.screenshot({ path: `${out}/admin-vote.png`, fullPage: true });
+    await adm.click('[data-tab=points]'); await adm.click('#btnExport'); await sleep(800);
+    await adm.screenshot({ path: `${out}/admin-points.png`, fullPage: true });
   }
   st = await api('adminState', tok);
   const design = st.dashboard[0].design;

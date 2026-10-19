@@ -64,6 +64,10 @@ function buildStudentState_(ctx, team, student) {
       coins: num_(s.COINS_PER_STUDENT, 10),
       votingOpen: truthy_(s.VOTING_OPEN),
       resultsPublic: truthy_(s.RESULTS_PUBLIC),
+      reviewOpen: truthy_(s.REVIEW_OPEN),
+      criteria: criteria_(s),
+      winPoints: [num_(s.POINT_WIN_1, 15), num_(s.POINT_WIN_2, 10), num_(s.POINT_WIN_3, 5)],
+      investDivisor: num_(s.INVEST_WIN_DIVISOR, 2),
       aiRules: String(s.AI_RULES || '').split('\n').map(function (x) { return x.trim(); }).filter(String)
     },
     roles: ROLES,
@@ -87,9 +91,22 @@ function buildStudentState_(ctx, team, student) {
   };
 
   var mine = ctx.votes.filter(function (v) { return String(v.voterNo) === String(student.no); });
-  if (mine.length) {
-    state.vote.done = true;
-    state.vote.mine = mine.map(function (v) { return { target: v.target, coins: num_(v.coins, 0), reason: v.reason || '' }; });
+  var myReviews = ctx.reviews.filter(function (r) { return String(r.voterNo) === String(student.no); });
+  var coinsAll = num_(s.COINS_PER_STUDENT, 10);
+  var spent = mine.reduce(function (a, v) { return a + num_(v.coins, 0); }, 0);
+  state.vote.submitted = mine.length > 0 || myReviews.length > 0;
+  state.vote.remaining = state.vote.submitted ? Math.max(0, coinsAll - spent) : coinsAll;
+  state.vote.topupUsed = myReviews.some(function (r) { return r.coins2 !== '' && r.coins2 !== null; });
+  state.vote.done = state.vote.submitted && (state.vote.remaining === 0 || state.vote.topupUsed);
+  if (state.vote.submitted) {
+    var crit = criteria_(s);
+    state.vote.mine = myReviews.length ? myReviews.map(function (r) {
+      var c1 = num_(r.coins, 0), c2 = num_(r.coins2, 0);
+      return {
+        target: r.target, coins: c1 + c2, coins1: c1, coins2: c2, reason: r.reason || '', reason2: r.reason2 || '', memo: r.memo || '',
+        marks: crit.map(function (x, i) { return String(r['c' + (i + 1)] || ''); })
+      };
+    }) : mine.map(function (v) { return { target: v.target, coins: num_(v.coins, 0), coins1: num_(v.coins, 0), coins2: 0, reason: v.reason || '', reason2: '', memo: '', marks: [] }; });
   }
 
   if (st.stages[3].open) state.expo = buildExpo_(ctx, team.id);
@@ -138,6 +155,49 @@ function apiChooseRole(code, no, roleId) {
     }
     setCells_('Students', a.student._row, { role: name });
     bump_('Students');
+  });
+  return apiState(code, no);
+}
+
+/**
+ * 마지막 추가 투자(한 번만): 남은 코인을 모두 투자. adds = { 팀ID: { coins, reason } }
+ * 추가로 코인을 준 팀은 '추가 투자 이유' 필수. 합계는 남은 코인과 같아야 함.
+ */
+function apiTopUpReview(code, no, adds) {
+  adds = adds || {};
+  withLock_(function () {
+    var settings = getSettings_();
+    if (!truthy_(settings.VOTING_OPEN)) throw new Error('투자 투표가 열려 있지 않아요.');
+    var a = authFresh_(code, no);
+    var mineR = readTableFresh_('Reviews').filter(function (r) { return String(r.voterNo) === String(no); });
+    if (!mineR.length) throw new Error('먼저 1차 투자(심사표 제출)를 해 주세요.');
+    if (mineR.some(function (r) { return r.coins2 !== '' && r.coins2 !== null; })) throw new Error('추가 투자는 한 번만 할 수 있어요.');
+    var spent = readTableFresh_('Votes').filter(function (v) { return String(v.voterNo) === String(no); })
+      .reduce(function (s2, v) { return s2 + num_(v.coins, 0); }, 0);
+    var remaining = num_(settings.COINS_PER_STUDENT, 10) - spent;
+    if (remaining <= 0) throw new Error('남은 코인이 없어요.');
+    var total = 0, missing = [], time = now_(), voteRows = [];
+    Object.keys(adds).forEach(function (tid) {
+      if (!mineR.some(function (r) { return r.target === tid; })) throw new Error('심사하지 않은 팀이 들어 있어요.');
+    });
+    var upd = mineR.map(function (r) {
+      var it = adds[r.target] || {};
+      var c = Number(it.coins || 0);
+      if (c < 0 || Math.floor(c) !== c) throw new Error('코인 수가 올바르지 않아요.');
+      var reason = clip_(it.reason || '', 300).trim();
+      if (c > 0 && !reason) missing.push(r.target);
+      total += c;
+      if (c > 0) voteRows.push({ time: time, voterNo: a.student.no, voterName: a.student.name, voterTeam: a.team.id, target: r.target, coins: c, reason: clip_('[추가] ' + reason, 120) });
+      return { row: r._row, coins2: c, reason2: c > 0 ? reason : '' };
+    });
+    if (missing.length) {
+      var names = a.teams.filter(function (t) { return missing.indexOf(t.id) >= 0; }).map(function (t) { return t.name; });
+      throw new Error('추가 투자 이유가 비어 있어요: ' + names.join(', '));
+    }
+    if (total !== remaining) throw new Error('남은 코인 ' + remaining + '개를 모두 투자해 주세요. (지금 ' + total + '개)');
+    upd.forEach(function (u) { setCells_('Reviews', u.row, { coins2: u.coins2, reason2: u.reason2 }); });
+    appendObjs_('Votes', voteRows);
+    bump_(['Reviews', 'Votes']);
   });
   return apiState(code, no);
 }
@@ -242,35 +302,51 @@ function apiSubmitPoster(code, no, url) {
   return apiState(code, no);
 }
 
-function apiSubmitVote(code, no, alloc, reasons) {
-  alloc = alloc || {};
-  reasons = reasons || {};
+/**
+ * 1차 투자: 투자 심사표 제출(한 번만). items = { 팀ID: { marks: ['◎','○',...], memo, coins, reason } }
+ * 다른 팀 모두: 기준별 ◎○△ + 투자 이유 필수. 코인은 1개 이상 ~ COINS_PER_STUDENT 이하(남긴 코인은 추가 투자에서 모두 사용).
+ * 제출한 코인은 회수할 수 없다.
+ */
+function apiSubmitReview(code, no, items) {
+  items = items || {};
   withLock_(function () {
     var settings = getSettings_();
     if (!truthy_(settings.VOTING_OPEN)) throw new Error('투자 투표가 아직 열리지 않았어요.');
+    var crit = criteria_(settings);
+    if (!crit.length) throw new Error('투자 기준이 아직 정해지지 않았어요. 선생님께 알려 주세요.');
     var a = authFresh_(code, no);
     var votes = readTableFresh_('Votes');
-    if (votes.some(function (v) { return String(v.voterNo) === String(no); })) throw new Error('이미 투자를 마쳤어요. 투자는 한 번만 할 수 있어요.');
+    var reviews = readTableFresh_('Reviews');
+    var done = function (r) { return String(r.voterNo) === String(no); };
+    if (votes.some(done) || reviews.some(done)) throw new Error('이미 투자를 마쳤어요. 투자는 한 번만 할 수 있어요.');
+    var targets = a.teams.filter(function (t) { return t.climate && t.id !== a.team.id; });
     var coins = num_(settings.COINS_PER_STUDENT, 10);
-    var total = 0;
-    var rows = [];
-    var time = now_();
-    Object.keys(alloc).forEach(function (tid) {
-      var c = Number(alloc[tid]);
-      if (!c) return;
-      if (c < 0 || Math.floor(c) !== c) throw new Error('코인 수가 올바르지 않아요.');
+    var total = 0, time = now_(), reviewRows = [], voteRows = [], missing = [];
+    Object.keys(items).forEach(function (tid) {
       if (tid === a.team.id) throw new Error('우리 팀에는 투자할 수 없어요.');
-      var target = a.teams.filter(function (t) { return t.id === tid && t.climate; })[0];
-      if (!target) throw new Error('없는 팀에 투자하려고 했어요.');
-      total += c;
-      rows.push({
-        time: time, voterNo: a.student.no, voterName: a.student.name, voterTeam: a.team.id,
-        target: tid, coins: c, reason: clip_(reasons[tid] || '', 120)
-      });
+      if (!targets.some(function (t) { return t.id === tid; })) throw new Error('없는 팀이 들어 있어요.');
     });
-    if (total !== coins) throw new Error('코인 ' + coins + '개를 모두 나눠 주세요. (지금 ' + total + '개)');
-    appendObjs_('Votes', rows);
-    bump_('Votes');
+    targets.forEach(function (t) {
+      var it = items[t.id] || {};
+      var marks = (it.marks || []).slice(0, crit.length);
+      var c = Number(it.coins || 0);
+      var reason = clip_(it.reason || '', 300).trim();
+      if (marks.length < crit.length || marks.some(function (m) { return !MARK_SCORE[m]; })) missing.push(t.name + ' 심사');
+      if (!reason) missing.push(t.name + ' 투자 이유');
+      if (c < 0 || Math.floor(c) !== c) throw new Error('코인 수가 올바르지 않아요.');
+      total += c;
+      var row = { time: time, voterNo: a.student.no, voterName: a.student.name, voterTeam: a.team.id, target: t.id,
+        memo: clip_(it.memo || '', 300), coins: c, reason: reason };
+      marks.forEach(function (m, i) { row['c' + (i + 1)] = m; });
+      reviewRows.push(row);
+      if (c > 0) voteRows.push({ time: time, voterNo: a.student.no, voterName: a.student.name, voterTeam: a.team.id, target: t.id, coins: c, reason: clip_(reason, 120) });
+    });
+    if (missing.length) throw new Error('아직 비어 있어요: ' + missing.join(', '));
+    if (total < 1) throw new Error('1차 투자에서 코인을 1개 이상 투자해 주세요.');
+    if (total > coins) throw new Error('코인은 ' + coins + '개까지예요. (지금 ' + total + '개)');
+    appendObjs_('Reviews', reviewRows);
+    appendObjs_('Votes', voteRows);
+    bump_(['Reviews', 'Votes']);
   });
   return apiState(code, no);
 }

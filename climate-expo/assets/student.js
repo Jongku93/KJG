@@ -58,6 +58,7 @@
     S.session = null;
     S.st = null;
     S.voteDraft = null;
+    S.topup = null;
     E.store('expo_session', null);
     clearInterval(S.timer);
     renderLogin();
@@ -258,7 +259,9 @@
         '</div>' +
 
         '<div class="card"><div class="card-title"><h2>🪙 투자자들이 보는 것</h2></div>' +
-        '<p>엑스포에서 친구들은 코인 ' + st.settings.coins + '개를 다른 팀 도시에 나눠 투자합니다. 가장 많이 받는 도시는 <b>기후와의 연결이 가장 잘 보이는 도시</b>일 거예요.</p></div>';
+        '<p>엑스포에서 친구들은 우리 반이 정한 투자 기준으로 도시를 심사하고, 코인 ' + st.settings.coins + '개를 다른 팀 도시에 모두 나눠 투자합니다. 가장 많이 받는 도시는 <b>기후와의 연결이 가장 잘 보이는 도시</b>일 거예요.</p>' +
+        '<p class="small muted" style="margin:0">🏆 우승 상금(팀원 1인당 그로스포인트): 1등 ' + st.settings.winPoints[0] + '점 · 2등 ' + st.settings.winPoints[1] + '점 · 3등 ' + st.settings.winPoints[2] + '점' +
+        (st.settings.investDivisor > 0 ? ' / 🎯 1등 도시에 투자 성공하면 투자 코인 ÷ ' + st.settings.investDivisor + '(반올림)점' : '') + '</p></div>';
     },
     bind: function (el) {
       $all('[data-go]', el).forEach(function (b) { b.addEventListener('click', function () { go(b.dataset.go); }); });
@@ -285,7 +288,8 @@
     }
     if (stage(4).open) {
       if (!st.team.poster) out.push(['s4', 'Canva 포스터 링크를 제출해요.']);
-      if (st.vote.open && !st.vote.done) out.push(['s4', '다른 도시에 투자해요.']);
+      if (st.vote.open && !st.vote.submitted) out.push(['s4', '투자 심사표를 제출해요(1차 투자).']);
+      else if (st.vote.submitted && !st.vote.done) out.push(['s4', '남은 코인 ' + st.vote.remaining + '개를 마지막으로 추가 투자해요.']);
     }
     return out;
   }
@@ -720,10 +724,16 @@
 
   /* ---------- 4단계: 포스터 · 엑스포 · 투자 ---------- */
 
-  function draftKey() { return 'expo_vote_' + S.st.team.id + '_' + S.st.me.no; }
+  /* 심사표 임시 저장(이 기기): { 팀ID: { marks: [], memo, coins, reason } } */
+  function draftKey() { return 'expo_review_' + S.st.team.id + '_' + S.st.me.no; }
   function getDraft() {
-    if (!S.voteDraft) S.voteDraft = E.store(draftKey()) || { alloc: {}, reasons: {} };
+    if (!S.voteDraft) S.voteDraft = E.store(draftKey()) || {};
     return S.voteDraft;
+  }
+  function draftOf(tid) {
+    var d = getDraft();
+    if (!d[tid]) d[tid] = { marks: [], memo: '', coins: 0, reason: '' };
+    return d[tid];
   }
   function saveDraft() { E.store(draftKey(), S.voteDraft); }
   function otherTeams() { return (S.st.expo || []).filter(function (t) { return !t.mine; }); }
@@ -731,13 +741,13 @@
   VIEWS.s4 = {
     sig: function () {
       var st = S.st;
-      return [stage(4).open, S.sub4, st.vote.open, st.vote.done, st.team.poster].join('|') + (S.sub4 === 'expo' ? JSON.stringify(st.expo) : '');
+      return [stage(4).open, S.sub4, st.vote.open, st.vote.done, st.vote.submitted, st.team.poster, st.settings.reviewOpen, st.settings.criteria.join('/')].join('|') + (S.sub4 === 'expo' ? JSON.stringify(st.expo) : '');
     },
     render: function () {
       var st = S.st;
       if (!stage(4).open) return lockedPanel('🔒', '4단계는 선생님이 열면 시작해요', 'Canva로 포스터를 만들 준비를 해 두세요.');
       var tabs = [['poster', '🎨 포스터 제출' + (st.team.poster ? ' ✓' : '')], ['expo', '🏛️ 엑스포 관람'],
-        ['vote', '🪙 투자 투표' + (st.vote.done ? ' ✓' : (st.vote.open ? '' : ' 🔒'))]];
+        ['vote', '🪙 투자 심사' + (st.vote.done ? ' ✓' : (st.vote.submitted ? ' 💰' : (st.vote.open || st.settings.reviewOpen ? '' : ' 🔒')))]];
       return '<div class="seg" id="seg4" style="margin-bottom:14px">' + tabs.map(function (t) {
         return '<button class="' + (S.sub4 === t[0] ? 'on' : '') + '" data-sub="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div><div id="sub4">' + SUB4[S.sub4]() + '</div>';
@@ -783,38 +793,115 @@
         }).join('') + '</div>';
     },
     vote: function () {
-      var st = S.st;
-      if (!st.vote.open && !st.vote.done) {
-        return lockedPanel('🪙', '투자 투표는 선생님이 열면 시작돼요', '그동안 엑스포에서 도시들을 살펴보고, 기후와 가장 잘 연결된 도시를 골라 두세요.');
+      var st = S.st, set = st.settings, crit = set.criteria;
+      if (st.vote.done) return reviewDoneHtml();
+      if (st.vote.submitted) return topUpHtml();
+      if (!set.reviewOpen && !st.vote.open) {
+        return lockedPanel('📋', '투자 심사표는 투자 설명회 때 열려요', '그동안 엑스포 관람에서 다른 도시들을 미리 살펴보세요.');
       }
-      if (st.vote.done) {
-        var names = {};
-        (st.expo || []).forEach(function (t) { names[t.id] = t; });
-        return '<div class="card center"><div style="font-size:3rem">🪙</div><h2>투자 완료!</h2><p class="muted">투자는 한 번만 할 수 있어요. 결과 발표를 기다려요.</p>' +
-          '<div style="max-width:420px;margin:0 auto;text-align:left">' + st.vote.mine.map(function (v) {
-            var t = names[v.target] || { name: v.target, city: '' };
-            return '<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>' + esc(t.icon || '') + ' ' + esc(t.city || t.name) + '</span><b style="color:var(--gold)">🪙 ' + v.coins + '</b></div>';
-          }).join('') + '</div></div>';
+      var html = appointHtml() + rewardHtml();
+      if (!crit.length) return html + lockedPanel('📝', '투자 기준을 정하는 중이에요', '반 친구들과 정한 투자 기준을 선생님이 입력하면 심사표가 나타나요.');
+      var voting = st.vote.open;
+      html += '<div class="card"><div class="card-title"><h2>📋 투자 심사표</h2></div>' +
+        '<ol class="rules" style="margin-bottom:8px">' + crit.map(function (c) { return '<li><b>' + esc(c) + '</b></li>'; }).join('') + '</ol>' +
+        '<p class="small muted" style="margin:0">◎ 근거가 뚜렷해요 · ○ 근거가 있어요 · △ 근거가 부족해요 — 미래 기술보다 <b>기후·재난과 얼마나 연결됐는지</b>를 보고 표시해요.</p>' +
+        (voting ? '' : '<p class="small" style="margin:8px 0 0">발표를 들으며 표시와 질문·메모를 채워 두세요. 표시는 이 기기에 저장돼요. 선생님이 <b>투자 투표</b>를 열면 코인과 이유를 쓸 수 있어요.</p>') + '</div>';
+      if (voting) html += warnHtml();
+      if (voting) html += '<div class="card" id="bankCard" style="position:sticky;top:110px;z-index:5"><div class="row between"><b>남은 코인 <span id="leftNum" style="color:var(--gold)"></span>개</b><span class="tiny muted">1차에 일부만 투자해도 돼요</span></div><div class="coins-bank" id="bank" style="margin-top:6px"></div></div>';
+      html += otherTeams().map(function (t) {
+        var d = draftOf(t.id);
+        return '<div class="card review-card" data-team="' + esc(t.id) + '">' +
+          '<div class="row"><span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span>' +
+          '<h3 style="margin:0">' + esc(t.city || t.name) + '</h3><span class="small muted">' + esc(t.name) + '</span></div>' +
+          '<div class="mark-table">' + crit.map(function (c, i) {
+            return '<div class="mark-row"><span class="mk-label">' + (i + 1) + '. ' + esc(c) + '</span><span class="mk-btns">' +
+              ['◎', '○', '△'].map(function (m) {
+                return '<button type="button" class="mk ' + (d.marks[i] === m ? 'on' : '') + '" data-i="' + i + '" data-m="' + m + '">' + m + '</button>';
+              }).join('') + '</span></div>';
+          }).join('') + '</div>' +
+          '<input type="text" class="memo" maxlength="300" placeholder="질문·메모 (발표 들으며): 예) 왜 그 기후라서 그렇게 했나요?" value="' + esc(d.memo) + '">' +
+          (voting ? '<div class="invest-row" style="border:0;padding:10px 0 0"><b>🪙 투자 코인</b>' +
+            '<div class="stepper"><button type="button" data-step="-1" aria-label="빼기">−</button><span class="val">' + (d.coins || 0) + '</span><button type="button" data-step="1" aria-label="더하기">+</button></div></div>' +
+            '<textarea class="reason" rows="2" maxlength="300" placeholder="투자 이유 (필수): ○○ 기후라서 ~했기 때문에 (투자하지 않는 이유도 써요)">' + esc(d.reason) + '</textarea>' : '') +
+          '</div>';
+      }).join('');
+      if (voting) {
+        html += '<div class="card"><div id="reviewMissing" class="small"></div>' +
+          '<button class="btn gold lg block" id="btnVote" style="margin-top:10px" disabled>1차 투자 제출하기</button>' +
+          '<p class="tiny muted center" style="margin:8px 0 0">제출한 코인은 회수할 수 없어요. 남긴 코인은 마지막에 한 번 더 투자해요.</p></div>';
       }
-      var d = getDraft();
-      var coins = st.settings.coins;
-      var others = otherTeams();
-      var used = others.reduce(function (a, t) { return a + (d.alloc[t.id] || 0); }, 0);
-      var left = coins - used;
-      return '<div class="card"><div class="card-title"><h2>🪙 투자 투표</h2></div>' +
-        '<p class="small muted">코인 ' + coins + '개를 다른 팀 도시에 나눠 투자해요. 우리 팀에는 투자할 수 없고, <b>제출하면 바꿀 수 없어요.</b> 기준: 기후와 설계가 얼마나 잘 연결되었나?</p>' +
-        '<div class="row between" style="margin:10px 0"><b>남은 코인 <span id="leftNum" style="color:var(--gold)">' + left + '</span>개</b></div>' +
-        '<div class="coins-bank" id="bank">' + coinBank(left, coins) + '</div>' +
-        '<div style="margin-top:8px">' + others.map(function (t) {
-          var n = d.alloc[t.id] || 0;
-          return '<div class="invest-row" data-team="' + esc(t.id) + '"><div><div class="row"><span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span>' +
-            '<b>' + esc(t.city || t.name) + '</b></div><div class="small muted">' + esc(t.name) + (t.intro ? ' · ' + esc(t.intro) : '') + '</div>' +
-            '<input type="text" class="reason" maxlength="120" placeholder="투자 이유 (선택): 어떤 점이 기후와 잘 연결됐나요?" value="' + esc(d.reasons[t.id] || '') + '" style="margin-top:8px;' + (n ? '' : 'display:none') + '"></div>' +
-            '<div class="stepper"><button type="button" data-step="-1" aria-label="빼기">−</button><span class="val">' + n + '</span><button type="button" data-step="1" aria-label="더하기">+</button></div></div>';
-        }).join('') + '</div>' +
-        '<button class="btn gold lg block" id="btnVote" style="margin-top:16px" ' + (left === 0 ? '' : 'disabled') + '>' + (left === 0 ? '투자 제출하기' : '코인을 모두 나눠 주세요 (' + left + '개 남음)') + '</button></div>';
+      return html;
     }
   };
+
+  function appointHtml() {
+    var st = S.st;
+    return '<div class="card appoint"><div class="section-label">WORLD CITY LEAGUE · 2050</div>' +
+      '<h2 style="margin:4px 0">📜 투자 심사단 위촉장</h2>' +
+      '<p style="margin:0"><b>' + esc(st.me.name) + '</b> 님을 2050 기후 도시 엑스포의 <b>투자 심사위원</b>으로 위촉합니다. ' +
+      '기후와 생활의 관계를 근거로 공정하게 심사해 주세요.</p>' +
+      '<p class="small muted" style="margin:6px 0 0;text-align:right">세계도시연맹 미래도시위원회</p></div>';
+  }
+
+  function rewardHtml() {
+    var set = S.st.settings, w = set.winPoints;
+    return '<div class="card"><div class="card-title"><h2>💰 투자 규칙과 보상</h2></div><ul class="small" style="margin:0;padding-left:18px">' +
+      '<li>코인 <b>' + set.coins + '개는 결국 모두</b> 다른 팀 도시에 투자해야 해요. 우리 팀에는 투자할 수 없어요.</li>' +
+      '<li>⚠ <b>한 번 투자한 코인은 회수할 수 없어요.</b> 신중하게 살핀 뒤 투자하세요. 1차 투자 때 남긴 코인은 <b>마지막에 한 번 더</b> 투자할 수 있어요(그때는 남은 코인을 모두 써요).</li>' +
+      '<li>모든 도시를 심사표로 평가하고, <b>모든 도시에 투자 이유</b>를 써요. (0코인이면 투자하지 않은 이유)</li>' +
+      (set.investDivisor > 0 ? '<li>🎯 <b>1등 도시에 투자 성공</b>하면, 그 도시에 투자한 코인 ÷ ' + set.investDivisor + '(반올림)만큼 <b>그로스포인트</b>를 받아요. 예) 7코인 → ' + Math.round(7 / set.investDivisor) + '점</li>' : '') +
+      '<li>🏆 우승 상금(도시 팀원 1인당 그로스포인트): <b>1등 ' + w[0] + '점 · 2등 ' + w[1] + '점 · 3등 ' + w[2] + '점</b></li>' +
+      '</ul></div>';
+  }
+
+  function warnHtml() {
+    return '<div class="card warn-card"><b>⚠ 투자한 코인은 회수할 수 없어요!</b>' +
+      '<p class="small" style="margin:4px 0 0">발표와 심사표를 신중하게 살핀 다음 투자하세요. 확신이 없으면 코인을 남겨 두었다가, <b>마지막에 남은 코인을 한 번 더</b> 투자할 수 있어요.</p></div>';
+  }
+
+  function topupKey() { return 'expo_topup_' + S.st.team.id + '_' + S.st.me.no; }
+  function getTopup() {
+    if (!S.topup) S.topup = E.store(topupKey()) || {};
+    return S.topup;
+  }
+
+  function topUpHtml() {
+    var st = S.st, v = st.vote, tp = getTopup();
+    var names = {};
+    (st.expo || []).forEach(function (t) { names[t.id] = t; });
+    if (!v.open) return '<div class="card center"><h2>1차 투자 완료</h2><p class="muted">남은 코인 ' + v.remaining + '개는 투자 투표가 다시 열리면 추가로 투자할 수 있어요.</p></div>';
+    return warnHtml() +
+      '<div class="card" style="border-color:var(--gold)"><div class="card-title"><h2>💰 마지막 추가 투자</h2></div>' +
+      '<p style="margin:0">1차 투자 후 남은 코인 <b style="color:var(--gold)">' + v.remaining + '개</b>를 <b>모두</b> 투자해요. 추가 투자는 <b>이번 한 번뿐</b>이에요. 추가로 코인을 준 도시에는 이유를 써요.</p>' +
+      '<div class="row between" style="margin-top:10px"><b>남은 코인 <span id="leftNum" style="color:var(--gold)"></span>개</b></div><div class="coins-bank" id="bank" style="margin-top:6px"></div></div>' +
+      v.mine.map(function (m) {
+        var t = names[m.target] || { name: m.target, city: '', icon: '', color: '#3a4a70', climate: '' };
+        var d = tp[m.target] || { coins: 0, reason: '' };
+        return '<div class="card topup-card" data-team="' + esc(m.target) + '"><div class="row between"><div class="row">' +
+          '<span class="climate-badge" style="--c:' + esc(t.color) + '">' + esc(t.icon) + ' ' + esc(t.climate) + '</span><b>' + esc(t.city || t.name) + '</b></div>' +
+          '<span class="small muted">1차 투자 🪙 ' + m.coins1 + '</span></div>' +
+          '<div class="invest-row" style="border:0;padding:10px 0 0"><b>➕ 추가 코인</b><div class="stepper"><button type="button" data-step="-1">−</button><span class="val">' + (d.coins || 0) + '</span><button type="button" data-step="1">+</button></div></div>' +
+          '<textarea class="reason2" rows="2" maxlength="300" placeholder="추가 투자 이유 (필수): ○○ 기후라서 ~했기 때문에" style="margin-top:8px;' + (d.coins ? '' : 'display:none') + '">' + esc(d.reason || '') + '</textarea></div>';
+      }).join('') +
+      '<div class="card"><div id="topupMissing" class="small"></div><button class="btn gold lg block" id="btnTopUp" style="margin-top:10px" disabled>추가 투자 제출하기</button></div>';
+  }
+
+  function reviewDoneHtml() {
+    var st = S.st, crit = st.settings.criteria;
+    var names = {};
+    (st.expo || []).forEach(function (t) { names[t.id] = t; });
+    return '<div class="card center"><div style="font-size:3rem">🪙</div><h2>투자 완료!</h2><p class="muted">투자는 한 번만 할 수 있어요. 결과 발표를 기다려요.</p></div>' +
+      rewardHtml() +
+      st.vote.mine.map(function (v) {
+        var t = names[v.target] || { name: v.target, city: '' };
+        return '<div class="card"><div class="row between"><b>' + esc(t.icon || '') + ' ' + esc(t.city || t.name) + '</b><b style="color:var(--gold)">🪙 ' + v.coins + (v.coins2 ? ' <span class="tiny muted">(1차 ' + v.coins1 + ' + 추가 ' + v.coins2 + ')</span>' : '') + '</b></div>' +
+          (v.marks && v.marks.length ? '<div class="row small" style="margin-top:6px">' + v.marks.map(function (m, i) {
+            return '<span class="chip">' + esc(crit[i] || ('기준' + (i + 1))) + ' ' + esc(m) + '</span>';
+          }).join('') + '</div>' : '') +
+          (v.reason ? '<p class="small" style="margin:8px 0 0">💬 ' + esc(v.reason) + '</p>' : '') +
+          (v.reason2 ? '<p class="small" style="margin:4px 0 0">➕ ' + esc(v.reason2) + '</p>' : '') + '</div>';
+      }).join('');
+  }
 
   function coinBank(left, total) {
     var html = '';
@@ -845,56 +932,132 @@
       });
     },
     vote: function (el) {
+      var st = S.st, crit = st.settings.criteria, coins = st.settings.coins;
+      if (st.vote.done) return;
+      if (st.vote.submitted) { bindTopUp(el); return; }
+      if (!crit.length) return;
       var btn = $('#btnVote', el);
-      if (!btn) return;
-      var d = getDraft();
-      var coins = S.st.settings.coins;
       function update() {
-        var used = otherTeams().reduce(function (a, t) { return a + (d.alloc[t.id] || 0); }, 0);
+        var used = 0, miss = [];
+        otherTeams().forEach(function (t) {
+          var d = draftOf(t.id);
+          used += d.coins || 0;
+          var nm = t.city || t.name;
+          if (crit.some(function (c, i) { return !d.marks[i]; })) miss.push(nm + ' 심사');
+          if (btn && !String(d.reason || '').trim()) miss.push(nm + ' 이유');
+        });
         var left = coins - used;
-        $('#leftNum').textContent = left;
-        $('#bank').innerHTML = coinBank(left, coins);
-        $all('.invest-row', el).forEach(function (row) {
-          var n = d.alloc[row.dataset.team] || 0;
-          $('.val', row).textContent = n;
-          $('[data-step="-1"]', row).disabled = n <= 0;
-          $('[data-step="1"]', row).disabled = left <= 0;
-          $('.reason', row).style.display = n ? '' : 'none';
-        });
-        btn.disabled = left !== 0;
-        btn.textContent = left === 0 ? '투자 제출하기' : '코인을 모두 나눠 주세요 (' + left + '개 남음)';
         saveDraft();
+        if (!btn) return;
+        $('#leftNum').textContent = left;
+        $('#bank').innerHTML = coinBank(Math.max(0, left), coins);
+        $all('.review-card', el).forEach(function (card) {
+          var n = draftOf(card.dataset.team).coins || 0;
+          $('.val', card).textContent = n;
+          $('[data-step="-1"]', card).disabled = n <= 0;
+          $('[data-step="1"]', card).disabled = left <= 0;
+        });
+        if (used < 1) miss.unshift('코인 1개 이상 투자');
+        $('#reviewMissing').innerHTML = (miss.length ? '⚠ 아직: ' + miss.map(esc).join(' · ') : '<span style="color:var(--ok)">✓ 심사와 이유를 모두 채웠어요.</span>') +
+          (left > 0 && !miss.length ? '<div class="small" style="margin-top:4px">남은 <b>' + left + '코인</b>은 마지막 추가 투자에서 모두 써야 해요.</div>' : '');
+        btn.disabled = miss.length > 0;
       }
-      $all('[data-step]', el).forEach(function (b) {
-        b.addEventListener('click', function () {
-          var id = b.closest('.invest-row').dataset.team;
-          d.alloc[id] = Math.max(0, (d.alloc[id] || 0) + Number(b.dataset.step));
-          update();
+      $all('.review-card', el).forEach(function (card) {
+        var d = draftOf(card.dataset.team);
+        $all('.mk', card).forEach(function (b) {
+          b.addEventListener('click', function () {
+            d.marks[Number(b.dataset.i)] = b.dataset.m;
+            $all('.mk[data-i="' + b.dataset.i + '"]', card).forEach(function (x) { x.classList.toggle('on', x === b); });
+            update();
+          });
+        });
+        $('.memo', card).addEventListener('input', function () { d.memo = this.value; saveDraft(); });
+        var r = $('.reason', card);
+        if (r) r.addEventListener('input', function () { d.reason = this.value; update(); });
+        $all('[data-step]', card).forEach(function (b) {
+          b.addEventListener('click', function () {
+            d.coins = Math.max(0, (d.coins || 0) + Number(b.dataset.step));
+            update();
+          });
         });
       });
-      $all('.reason', el).forEach(function (inp) {
-        inp.addEventListener('input', function () { d.reasons[inp.closest('.invest-row').dataset.team] = inp.value; saveDraft(); });
-      });
-      btn.addEventListener('click', async function () {
-        var others = otherTeams().filter(function (t) { return d.alloc[t.id]; });
-        var ok = await E.confirmBox('이대로 투자할까요?', '<p class="small muted">제출하면 바꿀 수 없어요.</p>' + others.map(function (t) {
-          return '<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(t.icon) + ' ' + esc(t.city || t.name) + '</span><b style="color:var(--gold)">🪙 ' + d.alloc[t.id] + '</b></div>';
+      if (btn) btn.addEventListener('click', async function () {
+        var teams = otherTeams();
+        var usedNow = teams.reduce(function (a2, t) { return a2 + (draftOf(t.id).coins || 0); }, 0);
+        var ok = await E.confirmBox('1차 투자를 제출할까요?', '<div class="warn-card" style="padding:10px 12px;border-radius:12px"><b>⚠ 투자한 코인은 회수할 수 없어요.</b></div>' +
+          (coins - usedNow > 0 ? '<p class="small">남은 ' + (coins - usedNow) + '코인은 마지막 추가 투자에서 모두 써야 해요.</p>' : '') + teams.map(function (t) {
+          var d = draftOf(t.id);
+          return '<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(t.icon) + ' ' + esc(t.city || t.name) + ' <span class="tiny muted">' + d.marks.join(' ') + '</span></span><b style="color:var(--gold)">🪙 ' + (d.coins || 0) + '</b></div>';
         }).join(''), '투자 확정', 'gold');
         if (!ok) return;
-        var alloc = {}, reasons = {};
-        others.forEach(function (t) { alloc[t.id] = d.alloc[t.id]; reasons[t.id] = (d.reasons[t.id] || '').trim(); });
+        var items = {};
+        teams.forEach(function (t) {
+          var d = draftOf(t.id);
+          items[t.id] = { marks: d.marks.slice(0, crit.length), memo: d.memo || '', coins: d.coins || 0, reason: (d.reason || '').trim() };
+        });
         try {
-          var st = await E.busy(btn, function () { return sapi('submitVote', alloc, reasons); });
+          var nst = await E.busy(btn, function () { return sapi('submitReview', items); });
           E.store(draftKey(), null);
           S.voteDraft = null;
-          applyState(st);
-          E.confetti(['#f7c54d', '#ffe9a6', '#ffffff']);
-          toast('투자를 마쳤어요!', 'ok');
+          applyState(nst);
+          if (nst.vote.done) { E.confetti(['#f7c54d', '#ffe9a6', '#ffffff']); toast('투자를 마쳤어요!', 'ok'); }
+          else toast('1차 투자 완료! 남은 코인 ' + nst.vote.remaining + '개는 마지막에 추가 투자해요.', 'ok');
         } catch (e) { poll(); }
       });
       update();
     }
   };
+
+  function bindTopUp(el) {
+    var btn = $('#btnTopUp', el);
+    if (!btn) return;
+    var tp = getTopup(), v = S.st.vote;
+    function saveTp() { E.store(topupKey(), tp); }
+    function update() {
+      var used = 0, miss = [];
+      $all('.topup-card', el).forEach(function (card) {
+        var d = tp[card.dataset.team] || (tp[card.dataset.team] = { coins: 0, reason: '' });
+        used += d.coins || 0;
+      });
+      var left = v.remaining - used;
+      $('#leftNum').textContent = left;
+      $('#bank').innerHTML = coinBank(Math.max(0, left), v.remaining);
+      $all('.topup-card', el).forEach(function (card) {
+        var d = tp[card.dataset.team];
+        $('.val', card).textContent = d.coins || 0;
+        $('[data-step="-1"]', card).disabled = !d.coins;
+        $('[data-step="1"]', card).disabled = left <= 0;
+        $('.reason2', card).style.display = d.coins ? '' : 'none';
+        if (d.coins && !String(d.reason || '').trim()) miss.push($('b', card).textContent + ' 추가 이유');
+      });
+      if (left !== 0) miss.unshift('남은 코인 ' + left + '개');
+      $('#topupMissing').innerHTML = miss.length ? '⚠ 아직: ' + miss.map(esc).join(' · ') : '<span style="color:var(--ok)">✓ 남은 코인을 모두 나눴어요.</span>';
+      btn.disabled = miss.length > 0;
+      saveTp();
+    }
+    $all('.topup-card', el).forEach(function (card) {
+      var id = card.dataset.team;
+      $all('[data-step]', card).forEach(function (b) {
+        b.addEventListener('click', function () { tp[id].coins = Math.max(0, (tp[id].coins || 0) + Number(b.dataset.step)); update(); });
+      });
+      $('.reason2', card).addEventListener('input', function () { tp[id].reason = this.value; update(); });
+    });
+    btn.addEventListener('click', async function () {
+      var ok = await E.confirmBox('마지막 추가 투자를 제출할까요?', '<div class="warn-card" style="padding:10px 12px;border-radius:12px"><b>⚠ 추가 투자는 한 번뿐이고, 회수할 수 없어요.</b></div>', '추가 투자 확정', 'gold');
+      if (!ok) return;
+      var adds = {};
+      Object.keys(tp).forEach(function (k) { if (tp[k].coins) adds[k] = { coins: tp[k].coins, reason: (tp[k].reason || '').trim() }; });
+      try {
+        var nst = await E.busy(btn, function () { return sapi('topUpReview', adds); });
+        E.store(topupKey(), null);
+        S.topup = null;
+        applyState(nst);
+        E.confetti(['#f7c54d', '#ffe9a6', '#ffffff']);
+        toast('모든 코인을 투자했어요!', 'ok');
+      } catch (e) { poll(); }
+    });
+    update();
+  }
 
   function cityDetail(id) {
     var t = (S.st.expo || []).filter(function (x) { return x.id === id; })[0];
@@ -923,6 +1086,23 @@
 
   /* ---------- 결과 발표 ---------- */
 
+  function statsHtml(r) {
+    if (!r.stats || !r.stats.length) return '';
+    return '<div class="stat-rows">' + r.stats.map(function (x) {
+      var tot = x.n || 1;
+      return '<div class="stat-row"><span class="small">' + esc(x.name) + '</span>' +
+        '<span class="mbar"><i class="m3" style="width:' + (x.counts['◎'] / tot * 100) + '%"></i><i class="m2" style="width:' + (x.counts['○'] / tot * 100) + '%"></i><i class="m1" style="width:' + (x.counts['△'] / tot * 100) + '%"></i></span>' +
+        '<span class="tiny muted">◎' + x.counts['◎'] + ' ○' + x.counts['○'] + ' △' + x.counts['△'] + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function reasonsHtml(list, max) {
+    if (!list || !list.length) return '<p class="small muted">투자 이유가 없어요.</p>';
+    var li = function (x) { return '<li><b>🪙 ' + x.coins + '</b> ' + esc(x.text) + '</li>'; };
+    var n = max || 6;
+    return '<ul class="reason-list">' + list.slice(0, n).map(li).join('') + '</ul>' +
+      (list.length > n ? '<details><summary class="small" style="cursor:pointer;margin-top:6px">이유 ' + (list.length - n) + '개 더 보기</summary><ul class="reason-list" style="margin-top:6px">' + list.slice(n).map(li).join('') + '</ul></details>' : '');
+  }
+
   VIEWS.results = {
     render: function () {
       var list = S.st.results;
@@ -930,19 +1110,25 @@
       var top = list.filter(function (r) { return r.rank === 1 && r.coins > 0; });
       var maxCoins = Math.max.apply(null, [1].concat(list.map(function (r) { return r.coins; })));
       var mine = list.filter(function (r) { return r.id === S.st.team.id; })[0];
-      return (top.length ? top.map(function (r) {
+      return top.map(function (r) {
         return '<div class="winner" style="--c:' + esc(r.color) + ';margin-bottom:14px"><div class="crown">👑</div><div class="section-label" style="color:var(--gold)">2050 EXPO WINNER</div>' +
           '<h2>' + esc(r.icon) + ' ' + esc(r.city) + '</h2><p class="muted">' + esc(r.name) + ' · ' + esc(r.climate) + ' 기후 · 🪙 ' + r.coins + '개 · 투자자 ' + r.investors + '명</p>' +
           (r.intro ? '<p>' + esc(r.intro) + '</p>' : '') +
-          (r.reasons.length ? '<div class="reasons" style="justify-content:center;margin-top:10px">' + r.reasons.slice(0, 6).map(function (x) { return '<span>“' + esc(x) + '”</span>'; }).join('') + '</div>' : '') +
           (r.poster ? '<p style="margin-top:12px"><a class="btn gold" href="' + esc(r.poster) + '" target="_blank" rel="noopener">🎨 우승 포스터 보기</a></p>' : '') + '</div>';
-      }).join('') : '') +
+      }).join('') +
       (mine ? '<div class="card flat center" style="margin-bottom:14px"><b>' + esc(S.st.team.name) + '</b>은(는) <b style="color:var(--gold)">' + mine.rank + '위</b> · 🪙 ' + mine.coins + '개를 받았어요.</div>' : '') +
       '<div class="card"><div class="card-title"><h2>📊 투자 순위</h2></div><div class="bars">' + list.map(function (r) {
         return '<div class="bar-row"><div class="rk ' + (r.rank === 1 ? 'top' : '') + '">' + r.rank + '</div>' +
           '<div class="bar" style="--c:' + esc(r.color) + '"><i style="width:' + Math.round(r.coins / maxCoins * 100) + '%"></i>' +
           '<span><span>' + esc(r.icon) + ' ' + esc(r.city) + ' <span class="muted small">' + esc(r.name) + '</span></span><span>🪙 ' + r.coins + '</span></span></div></div>';
-      }).join('') + '</div></div>';
+      }).join('') + '</div></div>' +
+      '<h2 style="margin:18px 0 10px">🔎 도시별 투자 이유와 심사 결과</h2><div class="city-grid">' + list.map(function (r) {
+        return '<div class="card flat" style="margin:0;border-top:6px solid ' + esc(r.color) + '">' +
+          '<div class="row between"><b>' + r.rank + '위 ' + esc(r.icon) + ' ' + esc(r.city) + '</b><b style="color:var(--gold)">🪙 ' + r.coins + '</b></div>' +
+          '<p class="tiny muted" style="margin:2px 0 8px">' + esc(r.name) + ' · 투자자 ' + r.investors + '명</p>' +
+          statsHtml(r) + '<h4 style="margin:10px 0 4px;font-size:.9rem">💬 투자 이유</h4>' + reasonsHtml(r.reasons) + '</div>';
+      }).join('') + '</div>' +
+      '<p class="tiny muted center" style="margin-top:12px">누가 얼마를 투자했는지는 공개하지 않아요.</p>';
     },
     bind: function () {
       var key = 'expo_confetti_' + S.st.team.id;

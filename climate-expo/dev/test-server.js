@@ -20,7 +20,7 @@ const sheetNames = () => g._ss.getSheets().map((s) => s.getName());
 
 // 1) 시트 자동 생성
 fails('adminLogin', ['0000'], /PIN/);
-assert.deepStrictEqual(sheetNames(), ['Settings', 'Teams', 'Students', 'Climates', 'Disasters', 'Designs', 'DisasterResponses', 'Votes', 'Export_Points', 'World_Buildings']);
+assert.deepStrictEqual(sheetNames(), ['Settings', 'Teams', 'Students', 'Climates', 'Disasters', 'Designs', 'DisasterResponses', 'Votes', 'Reviews', 'Export_Points', 'World_Buildings']);
 const tok = call('adminLogin', '1234').token;
 
 // 2) 명단 입력 (팀 칸 비우면 자동 배정)
@@ -120,30 +120,81 @@ fails('submitPoster', [t0.code, t0.members[0].no, 'canva.com/abc'], /https/);
 s0 = call('submitPoster', t0.code, t0.members[0].no, 'https://www.canva.com/design/abc/view');
 assert.ok(s0.stages[3].done);
 assert.strictEqual(s0.expo.length, 6);
-fails('submitVote', [t0.code, t0.members[0].no, { T2: 10 }, {}], /열리지/);
+// 투자 심사표: 기준 입력 → (투표 열림) 모든 팀 심사 + 모든 팀 이유 + 코인 10개 모두
+const items = (team, alloc) => {
+  const o = {};
+  st.dashboard.filter((t) => t.id !== team.id).forEach((t) => {
+    o[t.id] = { marks: ['◎', '○', '△'], memo: '질문: 왜 그렇게?', coins: alloc[t.id] || 0, reason: '열대 기후라서 바닥을 띄웠기 때문에' };
+  });
+  return o;
+};
+fails('submitReview', [t0.code, t0.members[0].no, items(t0, { T2: 10 })], /열리지/);
 call('adminSetSetting', tok, 'VOTING_OPEN', true);
-fails('submitVote', [t0.code, t0.members[0].no, { T1: 5, T2: 5 }, {}], /우리 팀/);
-fails('submitVote', [t0.code, t0.members[0].no, { T2: 4 }, {}], /모두/);
+fails('submitReview', [t0.code, t0.members[0].no, items(t0, { T2: 10 })], /기준/);
+call('adminSetSetting', tok, 'REVIEW_CRITERIA', '기후 맞춤\n재난 대비\n전통 계승과 미래 기술');
+assert.deepStrictEqual(call('state', t0.code, t0.members[0].no).settings.criteria, ['기후 맞춤', '재난 대비', '전통 계승과 미래 기술']);
+{
+  const bad = items(t0, { T2: 10 }); bad.T3.reason = '';
+  fails('submitReview', [t0.code, t0.members[0].no, bad], /T?3|비어/);
+  const bad2 = items(t0, { T2: 10 }); bad2.T4.marks = ['◎'];
+  fails('submitReview', [t0.code, t0.members[0].no, bad2], /심사/);
+  fails('submitReview', [t0.code, t0.members[0].no, items(t0, { T2: 11 })], /까지/);
+  fails('submitReview', [t0.code, t0.members[0].no, items(t0, {})], /1개 이상/);
+  const bad3 = items(t0, { T2: 10 }); bad3.T1 = { marks: ['◎', '◎', '◎'], coins: 0, reason: 'x' };
+  fails('submitReview', [t0.code, t0.members[0].no, bad3], /우리 팀/);
+}
+// 1차 투자는 일부만(회수 불가), 마지막 추가 투자로 남은 코인 모두
+{
+  const m0 = t0.members[0].no;
+  let ss = call('submitReview', t0.code, m0, items(t0, { T2: 6 }));
+  assert.ok(ss.vote.submitted && !ss.vote.done && ss.vote.remaining === 4);
+  fails('submitReview', [t0.code, m0, items(t0, { T3: 4 })], /이미/);
+  fails('topUpReview', [t0.code, m0, { T3: { coins: 4, reason: '' } }], /이유/);
+  fails('topUpReview', [t0.code, m0, { T3: { coins: 3, reason: '재난 대비가 좋아서' } }], /모두/);
+  assert.ok(call('adminState', tok).leftovers.some((x) => String(x.no) === String(m0) && x.left === 4));
+  ss = call('topUpReview', t0.code, m0, { T3: { coins: 4, reason: '건조 기후라서 물을 다시 쓰기 때문에' } });
+  assert.ok(ss.vote.done && ss.vote.remaining === 0);
+  assert.strictEqual(ss.vote.mine.find((v) => v.target === 'T3').coins, 4);
+  fails('topUpReview', [t0.code, m0, { T3: { coins: 1, reason: 'x' } }], /남은 코인|한 번/);
+}
 st.dashboard.forEach((t) => {
   t.members.forEach((m) => {
-    const target = t.id === 'T1' ? { T2: 6, T3: 4 } : { T1: 7, [t.id === 'T2' ? 'T3' : 'T2']: 3 };
-    call('submitVote', t.code, m.no, target, { T1: '비를 피하는 설계가 좋아요' });
+    if (String(m.no) === String(t0.members[0].no)) return;
+    const alloc = t.id === 'T1' ? { T2: 6, T3: 4 } : { T1: 7, [t.id === 'T2' ? 'T3' : 'T2']: 3 };
+    call('submitReview', t.code, m.no, items(t, alloc));
   });
 });
-fails('submitVote', [t0.code, t0.members[0].no, { T2: 10 }, {}], /이미/);
+assert.strictEqual(call('adminState', tok).leftovers.length, 0);
+fails('submitReview', [t0.code, t0.members[0].no, items(t0, { T2: 10 })], /이미/);
 st = call('adminState', tok);
 assert.strictEqual(st.voteCount, 24);
 assert.strictEqual(st.results[0].id, 'T1');
+assert.strictEqual(st.results[0].coins, 140);
 assert.strictEqual(st.results.reduce((a, b) => a + b.coins, 0), 240);
+assert.strictEqual(st.results[0].stats[0].counts['◎'], 20);
+assert.strictEqual(st.results[0].stats[2].avg, 1);
+assert.strictEqual(st.results[0].details.length, 20, '교사: 누가 얼마나');
+assert.ok(st.results[0].details[0].voterName);
 assert.ok(!call('state', t0.code, t0.members[0].no).results, '공개 전');
 call('adminSetSetting', tok, 'RESULTS_PUBLIC', true);
-assert.strictEqual(call('state', t0.code, t0.members[0].no).results[0].id, 'T1');
+{
+  const pub = call('state', t0.code, t0.members[0].no).results;
+  assert.strictEqual(pub[0].id, 'T1');
+  assert.ok(!pub[0].details, '학생 공개용에는 누가 얼마나가 없음');
+  assert.ok(!JSON.stringify(pub).includes('학생'), '이름 없음');
+  assert.strictEqual(pub[0].reasons[0].coins, 7);
+}
 
-// 9) 포인트·월드
+// 9) 포인트·월드 (1등 상금 15, 1등 도시 투자 성공 = 코인÷2 반올림)
 st = call('adminExportPoints', tok);
 const pts = st.exported;
 const t1pts = pts.filter((p) => String(p.no) === String(t0.members[0].no)).map((p) => p.code).sort();
 assert.deepStrictEqual(t1pts, ['DISASTER', 'STAGE1', 'STAGE2', 'STAGE4', 'VOTE', 'WIN1']);
+assert.strictEqual(pts.find((p) => p.code === 'WIN1').points, 15);
+const t2m = st.dashboard[1].members[0].no;
+const inv = pts.find((p) => String(p.no) === String(t2m) && p.code === 'INVEST');
+assert.strictEqual(inv.points, 4, '7코인 ÷ 2 = 3.5 → 반올림 4');
+assert.ok(pts.some((p) => String(p.no) === String(t2m) && p.code === 'WIN2'));
 st = call('adminRegisterWorld', tok, 'T1');
 assert.strictEqual(st.world.length, 1);
 assert.strictEqual(st.world[0].city, '비구름 도시');

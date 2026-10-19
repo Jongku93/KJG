@@ -17,7 +17,8 @@ function routes_() {
     drawDisaster: apiDrawDisaster,
     saveResponse: apiSaveResponse,
     submitPoster: apiSubmitPoster,
-    submitVote: apiSubmitVote,
+    submitReview: apiSubmitReview,
+    topUpReview: apiTopUpReview,
     // 교사
     adminLogin: apiAdminLogin,
     adminState: apiAdminState,

@@ -2,7 +2,7 @@
  * Logic.gs — 단계 열림/완료 판정, 진행 현황, 투표 집계, 포인트 계산
  */
 
-var ALL_TABLES = ['Settings', 'Teams', 'Students', 'Climates', 'Disasters', 'Designs', 'DisasterResponses', 'Votes'];
+var ALL_TABLES = ['Settings', 'Teams', 'Students', 'Climates', 'Disasters', 'Designs', 'DisasterResponses', 'Votes', 'Reviews'];
 
 function loadCtx_() {
   var t = readTables_(ALL_TABLES);
@@ -14,7 +14,8 @@ function loadCtx_() {
     disasters: t.Disasters.filter(function (r) { return r.id; }),
     designs: t.Designs,
     responses: t.DisasterResponses,
-    votes: t.Votes.filter(function (r) { return r.voterNo !== ''; })
+    votes: t.Votes.filter(function (r) { return r.voterNo !== ''; }),
+    reviews: t.Reviews.filter(function (r) { return r.voterNo !== '' && r.target; })
   };
 }
 
@@ -111,28 +112,69 @@ function votedSet_(ctx) {
   return s;
 }
 
-/** 투표 집계와 순위 */
-function computeResults_(ctx) {
-  var coins = {}, investors = {}, reasons = {};
+/** 투자 심사 기준 목록(최대 5개) */
+function criteria_(settings) {
+  return String(settings.REVIEW_CRITERIA || '').split('\n').map(function (x) { return x.trim(); })
+    .filter(String).slice(0, MAX_CRITERIA);
+}
+
+/**
+ * 투표 집계와 순위.
+ * opts.details = true 이면 누가 얼마를 왜 투자했는지까지(교사 화면 전용).
+ * 학생 공개용에는 이름 없이 코인·이유·기준별 ◎○△ 통계만 담는다.
+ */
+function computeResults_(ctx, opts) {
+  opts = opts || {};
+  var crit = criteria_(ctx.settings);
+  var coins = {}, investors = {};
   ctx.votes.forEach(function (v) {
     var c = num_(v.coins, 0);
     coins[v.target] = (coins[v.target] || 0) + c;
-    (investors[v.target] = investors[v.target] || {})[String(v.voterNo)] = true;
-    if (filled_(v.reason)) {
-      var list = reasons[v.target] = reasons[v.target] || [];
-      var txt = String(v.reason).trim();
-      if (list.indexOf(txt) < 0) list.push(txt);
-    }
+    if (c > 0) (investors[v.target] = investors[v.target] || {})[String(v.voterNo)] = true;
   });
+  var byTarget = {};
+  ctx.reviews.forEach(function (r) { (byTarget[r.target] = byTarget[r.target] || []).push(r); });
+
   var list = ctx.teams.filter(function (t) { return t.climate; }).map(function (t) {
     var d = designOf_(ctx, t.id).values;
     var c = climateOf_(ctx, t.climate);
-    return {
+    var revs = byTarget[t.id] || [];
+    var stats = crit.map(function (name, i) {
+      var cnt = { '◎': 0, '○': 0, '△': 0 }, sum = 0, n = 0;
+      revs.forEach(function (r) {
+        var m = String(r['c' + (i + 1)] || '');
+        if (MARK_SCORE[m]) { cnt[m]++; sum += MARK_SCORE[m]; n++; }
+      });
+      return { name: name, counts: cnt, avg: n ? Math.round(sum / n * 100) / 100 : 0, n: n };
+    });
+    var reasons = [];
+    revs.forEach(function (r) {
+      if (num_(r.coins, 0) > 0 && filled_(r.reason)) reasons.push({ coins: num_(r.coins, 0), text: String(r.reason).trim() });
+      if (num_(r.coins2, 0) > 0 && filled_(r.reason2)) reasons.push({ coins: num_(r.coins2, 0), text: '[추가 투자] ' + String(r.reason2).trim() });
+    });
+    reasons.sort(function (a, b) { return b.coins - a.coins; });
+    if (!revs.length) { // 심사표 이전 방식으로 낸 투표(이유만 있는 경우)
+      ctx.votes.forEach(function (v) {
+        if (v.target === t.id && filled_(v.reason)) reasons.push({ coins: num_(v.coins, 0), text: String(v.reason).trim() });
+      });
+    }
+    var o = {
       id: t.id, name: t.name, climate: t.climate, icon: c ? c.icon : '🌐', color: c ? c.color : '#4fd1c5',
       city: d.city_name || t.name, intro: d.intro, poster: t.poster,
       coins: coins[t.id] || 0, investors: Object.keys(investors[t.id] || {}).length,
-      reasons: (reasons[t.id] || []).slice(0, 12)
+      reasons: reasons, stats: stats
     };
+    if (opts.details) {
+      o.details = revs.map(function (r) {
+        return {
+          voterNo: r.voterNo, voterName: r.voterName, voterTeam: r.voterTeam,
+          coins: num_(r.coins, 0) + num_(r.coins2, 0), coins1: num_(r.coins, 0), coins2: num_(r.coins2, 0), reason2: String(r.reason2 || ''),
+          marks: crit.map(function (x, i) { return String(r['c' + (i + 1)] || ''); }),
+          memo: String(r.memo || ''), reason: String(r.reason || '')
+        };
+      }).sort(function (a, b) { return b.coins - a.coins || Number(a.voterNo) - Number(b.voterNo); });
+    }
+    return o;
   });
   var idNum = function (id) { return Number(String(id).replace(/\D/g, '')) || 0; };
   list.sort(function (a, b) { return b.coins - a.coins || idNum(a.id) - idNum(b.id); });
@@ -166,7 +208,17 @@ function computePoints_(ctx) {
       if (st.stages[3].done) add('STAGE4', '4단계 완료(포스터 제출)', 'POINT_STAGE4');
       if (voted[String(m.no)]) add('VOTE', '투자 투표 참여', 'POINT_VOTE');
       var r = rankOf[team.id];
-      if (hasVotes && r && r.coins > 0 && r.rank <= 3) add('WIN' + r.rank, '엑스포 ' + r.rank + '위', 'POINT_WIN_' + r.rank);
+      if (hasVotes && r && r.coins > 0 && r.rank <= 3) add('WIN' + r.rank, '엑스포 ' + r.rank + '위 도시 상금', 'POINT_WIN_' + r.rank);
+      // 1등 도시 투자 성공: 1등 도시(공동 1등 포함)에 투자한 코인 ÷ INVEST_WIN_DIVISOR, 반올림
+      var div = num_(s.INVEST_WIN_DIVISOR, 2);
+      if (hasVotes && div > 0) {
+        var won = ctx.votes.filter(function (v) {
+          var tr = rankOf[v.target];
+          return String(v.voterNo) === String(m.no) && tr && tr.rank === 1 && tr.coins > 0;
+        }).reduce(function (a, v) { return a + num_(v.coins, 0); }, 0);
+        var ip = Math.round(won / div);
+        if (ip > 0) rows.push({ pid: pid + '-' + m.no + '-INVEST', no: m.no, name: m.name, team: team.id, code: 'INVEST', item: '1등 도시 투자 성공(' + won + '코인 ÷ ' + div + ')', points: ip });
+      }
     });
   });
   return rows;

@@ -36,7 +36,7 @@ function apiAdminState(token) {
     settingsRows: readTable_('Settings').map(function (r) { return { key: r.key, value: r.value, note: r.note }; }),
     flags: {
       1: truthy_(s.STAGE1_OPEN), 2: truthy_(s.STAGE2_OPEN), 3: truthy_(s.STAGE3_OPEN), 4: truthy_(s.STAGE4_OPEN),
-      voting: truthy_(s.VOTING_OPEN), results: truthy_(s.RESULTS_PUBLIC)
+      voting: truthy_(s.VOTING_OPEN), results: truthy_(s.RESULTS_PUBLIC), review: truthy_(s.REVIEW_OPEN)
     },
     className: s.CLASS_NAME || '',
     coins: num_(s.COINS_PER_STUDENT, 10),
@@ -57,7 +57,14 @@ function apiAdminState(token) {
     disasters: ctx.disasters.map(function (d) {
       return { id: d.id, climate: d.climate, name: d.name, story: d.story, question: d.question, active: truthy_(d.active) };
     }),
-    results: computeResults_(ctx),
+    results: computeResults_(ctx, { details: true }),
+    criteria: criteria_(s),
+    leftovers: (function () {
+      var coinsAll = num_(s.COINS_PER_STUDENT, 10), spent = {};
+      ctx.votes.forEach(function (v) { spent[String(v.voterNo)] = (spent[String(v.voterNo)] || 0) + num_(v.coins, 0); });
+      return ctx.students.filter(function (st) { var k = String(st.no); return spent[k] !== undefined && spent[k] < coinsAll; })
+        .map(function (st) { return { no: st.no, name: st.name, left: coinsAll - spent[String(st.no)] }; });
+    })(),
     voteCount: Object.keys(votedSet_(ctx)).length,
     studentCount: ctx.students.length,
     world: world.map(function (w) { delete w._row; return w; }),
@@ -214,7 +221,7 @@ function apiAdminSetRole(token, no, roleId) {
 
 /* ---------- 단계 ---------- */
 
-var EDITABLE_FLAGS = { STAGE1_OPEN: 1, STAGE2_OPEN: 1, STAGE3_OPEN: 1, STAGE4_OPEN: 1, VOTING_OPEN: 1, RESULTS_PUBLIC: 1 };
+var EDITABLE_FLAGS = { STAGE1_OPEN: 1, STAGE2_OPEN: 1, STAGE3_OPEN: 1, STAGE4_OPEN: 1, VOTING_OPEN: 1, RESULTS_PUBLIC: 1, REVIEW_OPEN: 1 };
 
 function apiAdminSetSetting(token, key, value) {
   requireAdmin_(token);
@@ -222,7 +229,7 @@ function apiAdminSetSetting(token, key, value) {
   if (!key) throw new Error('설정 키가 없어요.');
   if (key === 'ADMIN_PIN' && String(value).trim().length < 4) throw new Error('PIN은 4자리 이상이어야 해요.');
   if (EDITABLE_FLAGS[key]) value = !!value && value !== 'false';
-  else if (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value.trim()) && /^(POINT_|COINS_)/.test(key)) value = Number(value);
+  else if (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value.trim()) && /^(POINT_|COINS_|INVEST_)/.test(key)) value = Number(value);
   withLock_(function () { setSetting_(key, value); });
   return apiAdminState(token);
 }
@@ -354,10 +361,12 @@ function apiAdminSaveCard(token, sheetName, id, obj) {
 function apiAdminResetVote(token, no) {
   requireAdmin_(token);
   withLock_(function () {
-    var sh = sheet_('Votes');
-    var rows = readTableFresh_('Votes').filter(function (v) { return String(v.voterNo) === String(no); });
-    rows.sort(function (a, b) { return b._row - a._row; }).forEach(function (r) { sh.deleteRow(r._row); });
-    bump_('Votes');
+    ['Votes', 'Reviews'].forEach(function (name) {
+      var sh = sheet_(name);
+      var rows = readTableFresh_(name).filter(function (v) { return String(v.voterNo) === String(no); });
+      rows.sort(function (a, b) { return b._row - a._row; }).forEach(function (r) { sh.deleteRow(r._row); });
+    });
+    bump_(['Votes', 'Reviews']);
   });
   return apiAdminState(token);
 }
@@ -402,7 +411,7 @@ function apiAdminResetAll(token, confirmWord, includeRoster) {
   requireAdmin_(token);
   if (confirmWord !== '초기화') throw new Error('확인 문구가 맞지 않아요.');
   withLock_(function () {
-    ['Designs', 'DisasterResponses', 'Votes', 'Export_Points'].forEach(clearBody_);
+    ['Designs', 'DisasterResponses', 'Votes', 'Reviews', 'Export_Points'].forEach(clearBody_);
     if (includeRoster) {
       clearBody_('Students');
       clearBody_('Teams');
@@ -419,7 +428,7 @@ function apiAdminResetAll(token, confirmWord, includeRoster) {
       });
     }
     setSetting_('STAGE1_OPEN', true);
-    ['STAGE2_OPEN', 'STAGE3_OPEN', 'STAGE4_OPEN', 'VOTING_OPEN', 'RESULTS_PUBLIC'].forEach(function (k) { setSetting_(k, false); });
+    ['STAGE2_OPEN', 'STAGE3_OPEN', 'STAGE4_OPEN', 'REVIEW_OPEN', 'VOTING_OPEN', 'RESULTS_PUBLIC'].forEach(function (k) { setSetting_(k, false); });
     bump_(SHEET_ORDER);
   });
   var st = apiAdminState(token);

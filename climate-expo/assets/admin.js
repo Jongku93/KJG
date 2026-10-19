@@ -22,7 +22,8 @@
     ['STAGE2_OPEN', 2, '2단계 짓는다', '직책별 설계 기록'],
     ['STAGE3_OPEN', 3, '3단계 버틴다', '재난 경보! 재난 카드 뽑기 · 대응 작성'],
     ['STAGE4_OPEN', 4, '4단계 자랑한다', 'Canva 포스터 제출 · 엑스포 관람'],
-    ['VOTING_OPEN', 'voting', '투자 투표 열기', '1인당 코인을 다른 팀에 나눠 투자'],
+    ['REVIEW_OPEN', 'review', '투자 심사표 열기', '배움 2: 발표를 들으며 기준별 ◎○△ 표시·질문 메모 (코인은 아직)'],
+    ['VOTING_OPEN', 'voting', '투자 투표 열기', '배움 3: 코인 10개 모두 투자 + 모든 도시에 이유 쓰고 제출'],
     ['RESULTS_PUBLIC', 'results', '결과 공개', '학생 화면에 순위와 우승 도시 발표']
   ];
 
@@ -448,37 +449,94 @@
 
   /* ---------- 투표·결과 ---------- */
 
+  var CRIT_EX = ['기후 맞춤 (이 기후라서 이렇게 지었나)', '재난 대비 (재난을 버티는 근거가 있나)', '전통 계승과 미래 기술 (전통 생활의 원리를 발전시켰나)', '', ''];
+
+  function markBar(x) {
+    var tot = x.n || 1;
+    return '<span class="mbar" style="min-width:90px"><i class="m3" style="width:' + (x.counts['◎'] / tot * 100) + '%"></i><i class="m2" style="width:' + (x.counts['○'] / tot * 100) + '%"></i><i class="m1" style="width:' + (x.counts['△'] / tot * 100) + '%"></i></span>';
+  }
+
   function viewVote() {
-    var st = A.st;
+    var st = A.st, crit = st.criteria || [];
     var pct = st.studentCount ? Math.round(st.voteCount / st.studentCount * 100) : 0;
     var maxCoins = Math.max.apply(null, [1].concat(st.results.map(function (r) { return r.coins; })));
-    return '<div class="card"><div class="card-title"><h2>투표·결과 공개</h2></div>' +
+    var html = '<div class="card"><div class="card-title"><h2>📋 투자 심사 기준</h2><span class="chip">최대 5개</span></div>' +
+      '<p class="small muted">배움 1에서 학생들과 정한 기준을 적고 저장하면 학생 심사표에 나타나요. 빈칸은 보이지 않아요.' +
+      (st.voteCount ? ' <b style="color:var(--warn)">이미 제출한 학생이 있어요. 기준을 바꾸면 통계가 섞일 수 있어요.</b>' : '') + '</p>' +
+      [0, 1, 2, 3, 4].map(function (i) {
+        return '<div class="row" style="margin-bottom:6px"><b style="width:22px">' + (i + 1) + '</b><input type="text" class="crit-in grow" style="flex:1" maxlength="60" value="' + esc(crit[i] || '') + '" placeholder="' + esc(CRIT_EX[i] ? '예) ' + CRIT_EX[i] : '(비워 두면 안 보임)') + '"></div>';
+      }).join('') +
+      '<button class="btn primary" id="btnCrit">기준 저장</button></div>' +
+
+      '<div class="card"><div class="card-title"><h2>열기·공개</h2></div>' +
       FLAG_INFO.slice(4).map(function (f) {
         return '<div class="flag-row">' + sw(f[0], st.flags[f[1]]) + '<div class="grow"><b>' + esc(f[2]) + '</b><div class="small muted">' + esc(f[3]) + '</div></div></div>';
-      }).join('') + '</div>' +
+      }).join('') + '<p class="tiny muted" style="margin:8px 0 0">결과 공개: 학생은 도시별 코인·이유·기준별 ◎○△ 통계를 봐요. 누가 얼마를 투자했는지는 이 교사 화면에만 보여요.</p></div>' +
 
-      '<div class="card"><div class="card-title"><h2>투표 진행</h2><div class="grow"></div><b>' + st.voteCount + ' / ' + st.studentCount + '명</b></div>' +
+      '<div class="card"><div class="card-title"><h2>제출 현황</h2><div class="grow"></div><b>' + st.voteCount + ' / ' + st.studentCount + '명</b></div>' +
       '<div class="progress"><i style="width:' + pct + '%"></i></div>' +
       '<div class="small" style="margin-top:12px">' + st.dashboard.map(function (t) {
         var left = t.members.filter(function (m) { return !m.voted; });
-        return '<div style="padding:4px 0"><b>' + esc(t.name) + '</b> ' + (left.length ? '<span class="muted">미투표: ' + left.map(function (m) { return esc(m.no + ' ' + m.name); }).join(', ') + '</span>' : '<span class="chip ok">모두 완료</span>') + '</div>';
-      }).join('') + '</div></div>' +
+        return '<div style="padding:4px 0"><b>' + esc(t.name) + '</b> ' + (left.length ? '<span class="muted">미제출: ' + left.map(function (m) { return esc(m.no + ' ' + m.name); }).join(', ') + '</span>' : '<span class="chip ok">모두 완료</span>') + '</div>';
+      }).join('') + '</div>' +
+      ((st.leftovers || []).length ? '<div class="small" style="margin-top:8px;color:var(--warn)">💰 잔여 코인 남은 학생(마지막 추가 투자 필요): ' + st.leftovers.map(function (x) { return esc(x.no + ' ' + x.name + ' ' + x.left + '개'); }).join(', ') + '</div>' : '') +
+      '<p class="tiny muted" style="margin:6px 0 0">제출 = 1차 투자 완료. 남은 코인은 학생이 마지막에 한 번 더 투자해요.</p></div>' +
 
-      '<div class="card"><div class="card-title"><h2>집계</h2><div class="grow"></div>' +
-      '<button class="btn gold" id="btnShow">🏆 발표 모드</button></div>' +
-      (st.results.length ? '<div class="bars">' + st.results.map(function (r) {
-        return '<div class="bar-row"><div class="rk ' + (r.rank === 1 ? 'top' : '') + '">' + r.rank + '</div>' +
-          '<div class="bar" style="--c:' + esc(r.color) + '"><i style="width:' + Math.round(r.coins / maxCoins * 100) + '%"></i>' +
-          '<span><span>' + esc(r.icon) + ' ' + esc(r.city) + ' <span class="muted small">' + esc(r.name) + ' · ' + esc(r.climate) + '</span></span>' +
-          '<span>🪙 ' + r.coins + ' <span class="muted small">(' + r.investors + '명)</span></span></span></div></div>' +
-          (r.reasons.length ? '<div></div><div class="reasons" style="margin:-4px 0 6px">' + r.reasons.slice(0, 6).map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '');
-      }).join('') + '</div>' : '<p class="muted">기후가 정해진 팀이 없어요.</p>') +
-      '</div>';
+      '<div class="card"><div class="card-title"><h2>📊 투자 결과·심사 통계</h2><div class="grow"></div>' +
+      '<button class="btn gold" id="btnShow">🏆 발표 모드</button></div>';
+    if (!st.results.length) return html + '<p class="muted">기후가 정해진 팀이 없어요.</p></div>';
+    html += '<div class="bars">' + st.results.map(function (r) {
+      return '<div class="bar-row"><div class="rk ' + (r.rank === 1 ? 'top' : '') + '">' + r.rank + '</div>' +
+        '<div class="bar" style="--c:' + esc(r.color) + '"><i style="width:' + Math.round(r.coins / maxCoins * 100) + '%"></i>' +
+        '<span><span>' + esc(r.icon) + ' ' + esc(r.city) + ' <span class="muted small">' + esc(r.name) + ' · ' + esc(r.climate) + '</span></span>' +
+        '<span>🪙 ' + r.coins + ' <span class="muted small">(' + r.investors + '명)</span></span></span></div></div>';
+    }).join('') + '</div>';
+    if (crit.length) {
+      html += '<div class="table-wrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>순위</th><th>도시</th>' +
+        crit.map(function (c) { return '<th>' + esc(c) + '<div class="tiny muted">◎ ○ △ · 평균(3점)</div></th>'; }).join('') + '<th>평균</th></tr></thead><tbody>' +
+        st.results.map(function (r) {
+          var avgAll = r.stats.length ? (r.stats.reduce(function (a, x) { return a + x.avg; }, 0) / r.stats.length) : 0;
+          return '<tr><td><b>' + r.rank + '</b></td><td><b>' + esc(r.icon) + ' ' + esc(r.city) + '</b><div class="tiny muted">' + esc(r.name) + '</div></td>' +
+            r.stats.map(function (x) {
+              return '<td>' + markBar(x) + '<div class="tiny">◎' + x.counts['◎'] + ' ○' + x.counts['○'] + ' △' + x.counts['△'] + ' · <b>' + x.avg.toFixed(2) + '</b></div></td>';
+            }).join('') + '<td><b>' + avgAll.toFixed(2) + '</b></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    html += '<div class="card"><div class="card-title"><h2>🔒 도시별 투자 내역 <span class="chip">교사만</span></h2></div>' +
+      st.results.map(function (r) {
+        return '<details style="margin:6px 0"><summary style="cursor:pointer"><b>' + r.rank + '위 ' + esc(r.icon) + ' ' + esc(r.city) + '</b> · 🪙 ' + r.coins + ' · 심사 ' + (r.details || []).length + '명</summary>' +
+          ((r.details || []).length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>학생</th><th>코인</th>' + crit.map(function (c, i) { return '<th title="' + esc(c) + '">기준' + (i + 1) + '</th>'; }).join('') + '<th style="min-width:240px">투자 이유</th><th style="min-width:160px">질문·메모</th></tr></thead><tbody>' +
+            r.details.map(function (d) {
+              return '<tr><td style="white-space:nowrap">' + esc(d.voterNo + ' ' + d.voterName) + '</td><td><b style="color:var(--gold)">' + d.coins + '</b>' + (d.coins2 ? '<div class="tiny muted">1차 ' + d.coins1 + ' + 추가 ' + d.coins2 + '</div>' : '') + '</td>' +
+                d.marks.map(function (m) { return '<td>' + esc(m) + '</td>'; }).join('') + '<td class="small">' + esc(d.reason) + (d.reason2 ? '<div>➕ ' + esc(d.reason2) + '</div>' : '') + '</td><td class="small muted">' + esc(d.memo) + '</td></tr>';
+            }).join('') + '</tbody></table></div>' : '<p class="small muted">아직 심사표가 없어요.</p>') + '</details>';
+      }).join('') + '</div>';
+
+    var byStudent = {};
+    st.results.forEach(function (r) {
+      (r.details || []).forEach(function (d) {
+        var k = String(d.voterNo);
+        (byStudent[k] = byStudent[k] || { no: d.voterNo, name: d.voterName, rows: [] }).rows.push({ city: r.city, coins: d.coins, reason: d.reason + (d.reason2 ? ' / ➕ ' + d.reason2 : '') });
+      });
+    });
+    var studs = Object.keys(byStudent).map(function (k) { return byStudent[k]; }).sort(function (a, b) { return Number(a.no) - Number(b.no); });
+    html += '<div class="card"><div class="card-title"><h2>🧑‍🎓 학생별 투자 이유 <span class="chip">교사만 · 서술 평가용</span></h2></div>' +
+      (studs.length ? studs.map(function (x) {
+        return '<details style="margin:6px 0"><summary style="cursor:pointer"><b>' + esc(x.no + ' ' + x.name) + '</b></summary><ul class="reason-list" style="margin-top:6px">' +
+          x.rows.sort(function (a, b) { return b.coins - a.coins; }).map(function (r) { return '<li><b>🪙 ' + r.coins + '</b> ' + esc(r.city) + ': ' + esc(r.reason) + '</li>'; }).join('') + '</ul></details>';
+      }).join('') : '<p class="small muted">아직 제출한 학생이 없어요.</p>') + '</div>';
+    return html;
   }
 
   function bindVote(view) {
     bindFlags(view);
-    $('#btnShow', view).addEventListener('click', showResults);
+    $('#btnShow', view) && $('#btnShow', view).addEventListener('click', showResults);
+    $('#btnCrit', view).addEventListener('click', function (e) {
+      var lines = $all('.crit-in', view).map(function (i) { return i.value.trim(); }).filter(String);
+      act(e.currentTarget, 'adminSetSetting', 'REVIEW_CRITERIA', lines.join('\n')).then(function () { toast('투자 기준을 저장했어요. 학생 심사표에 곧 보여요.', 'ok'); }).catch(function () {});
+    });
   }
 
   /** 발표 모드: 꼴찌부터 한 팀씩 공개 */

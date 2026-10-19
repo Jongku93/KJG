@@ -6,7 +6,7 @@
  * 그로스포인트 앱과 나중에 연결할 때는 각 필드의 영어 key를 기준으로 맞춘다.
  */
 
-var SCHEMA_VERSION = '2026-10-v2';
+var SCHEMA_VERSION = '2026-10-v3';
 
 var ROLES = [
   { id: 'housing',   name: '주거·건축', icon: '🏠', hint: '집, 건물, 마을 모양' },
@@ -39,6 +39,9 @@ var RESPONSE_FIELDS = [
 ];
 
 var TEXT_MAX = 600;
+var REVIEW_MARKS = ['◎', '○', '△'];        // 투자 심사표 3단계
+var MARK_SCORE = { '◎': 3, '○': 2, '△': 1 };
+var MAX_CRITERIA = 5;
 var WILD = '공통';
 var OVERRIDE_OPEN = '열림';
 var OVERRIDE_LOCK = '잠김';
@@ -101,6 +104,16 @@ var SCHEMA = {
     ],
     notes: { sync: '그로스포인트 연동용. 비어 있으면 아직 반영 전.' }
   },
+  Reviews: {
+    fields: [
+      ['time', '제출 시각', 140], ['voterNo', '심사자 번호', 90], ['voterName', '심사자 이름', 90],
+      ['voterTeam', '심사자 팀ID', 90], ['target', '대상 팀ID', 90],
+      ['c1', '기준1', 60], ['c2', '기준2', 60], ['c3', '기준3', 60], ['c4', '기준4', 60], ['c5', '기준5', 60],
+      ['memo', '메모·질문', 240], ['coins', '코인', 60], ['reason', '투자 이유', 320],
+      ['coins2', '추가 코인', 70], ['reason2', '추가 투자 이유', 300]
+    ],
+    notes: { c1: '기준 이름은 Settings의 REVIEW_CRITERIA 순서. ◎=3 ○=2 △=1' }
+  },
   World_Buildings: {
     fields: [
       ['team', '팀ID', 70], ['city', '도시 이름', 140], ['climate', '기후', 70], ['intro', '한 줄 소개', 300],
@@ -110,7 +123,7 @@ var SCHEMA = {
 };
 
 var SHEET_ORDER = ['Settings', 'Teams', 'Students', 'Climates', 'Disasters', 'Designs',
-  'DisasterResponses', 'Votes', 'Export_Points', 'World_Buildings'];
+  'DisasterResponses', 'Votes', 'Reviews', 'Export_Points', 'World_Buildings'];
 
 /** Settings 초기값: [키, 값, 설명] */
 function defaultSettings_() {
@@ -123,7 +136,9 @@ function defaultSettings_() {
     ['STAGE2_OPEN', false, '2단계(짓는다) 반 전체 열림'],
     ['STAGE3_OPEN', false, '3단계(버틴다) 반 전체 열림 = 재난 경보'],
     ['STAGE4_OPEN', false, '4단계(자랑한다) 반 전체 열림 = 포스터 제출·엑스포 관람'],
-    ['VOTING_OPEN', false, '투자 투표 열림'],
+    ['REVIEW_OPEN', false, '투자 심사표 열림(발표 들으며 ◎○△ 표시·메모)'],
+    ['REVIEW_CRITERIA', '', '투자 심사 기준(한 줄에 하나, 최대 5개). 수업에서 학생들과 정한 뒤 입력'],
+    ['VOTING_OPEN', false, '투자 투표 열림(코인 투자 + 이유 쓰기 + 제출)'],
     ['RESULTS_PUBLIC', false, '결과 발표(학생 화면에 순위 공개)'],
     ['COINS_PER_STUDENT', 10, '학생 1명이 투자하는 코인 수'],
     ['POINT_STAGE1', 5, '포인트: 1단계 완료(기후가 정해지고 팀원 모두 직책 선택)'],
@@ -131,9 +146,10 @@ function defaultSettings_() {
     ['POINT_DISASTER', 10, '포인트: 3단계 재난 대응 작성'],
     ['POINT_STAGE4', 10, '포인트: 4단계 포스터 링크 제출'],
     ['POINT_VOTE', 3, '포인트: 투자 투표 참여(개인)'],
-    ['POINT_WIN_1', 20, '포인트: 우승(1위) 팀원'],
+    ['POINT_WIN_1', 15, '포인트: 우승(1위) 팀원'],
     ['POINT_WIN_2', 10, '포인트: 2위 팀원'],
     ['POINT_WIN_3', 5, '포인트: 3위 팀원'],
+    ['INVEST_WIN_DIVISOR', 2, '1등 도시 투자 성공 보상: 1등 도시에 투자한 코인 ÷ 이 값(반올림). 0이면 보상 없음'],
     ['AI_RULES', [
       '먼저 우리 팀끼리 생각한 다음에 AI에게 묻는다.',
       'AI 답을 그대로 옮기지 않는다. "이 기후라서?"를 우리 말로 다시 쓴다.',
