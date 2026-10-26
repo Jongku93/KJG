@@ -583,7 +583,27 @@
 
   /* ---------- 포인트·월드 ---------- */
 
-  var POINT_KEYS = ['POINT_STAGE1', 'POINT_STAGE2', 'POINT_DISASTER', 'POINT_STAGE4', 'POINT_VOTE', 'POINT_WIN_1', 'POINT_WIN_2', 'POINT_WIN_3', 'COINS_PER_STUDENT', 'PROJECT_ID'];
+  var POINT_KEYS = ['POINT_STAGE1', 'POINT_STAGE2', 'POINT_DISASTER', 'POINT_STAGE4', 'POINT_VOTE', 'POINT_WIN_1', 'POINT_WIN_2', 'POINT_WIN_3', 'INVEST_WIN_DIVISOR', 'COINS_PER_STUDENT', 'PROJECT_ID'];
+
+  /** 1등 도시 투자 성공 보상 미리보기: 1등 도시(공동 1등 포함)에 투자한 코인만 ÷ INVEST_WIN_DIVISOR, 반올림 */
+  function investPreview() {
+    var st = A.st;
+    var row = st.settingsRows.filter(function (r) { return r.key === 'INVEST_WIN_DIVISOR'; })[0];
+    var div = row ? Number(row.value) : 2;
+    if (isNaN(div)) div = 2;
+    var tops = st.results.filter(function (r) { return r.rank === 1 && r.coins > 0; });
+    var by = {};
+    tops.forEach(function (r) {
+      (r.details || []).forEach(function (d) {
+        if (!d.coins) return;
+        var k = String(d.voterNo);
+        (by[k] = by[k] || { no: d.voterNo, name: d.voterName, coins: 0 }).coins += d.coins;
+      });
+    });
+    var list = Object.keys(by).map(function (k) { var x = by[k]; x.points = div > 0 ? Math.round(x.coins / div) : 0; return x; })
+      .sort(function (a, b) { return Number(a.no) - Number(b.no); });
+    return { div: div, tops: tops, list: list, total: list.reduce(function (a, x) { return a + x.points; }, 0) };
+  }
 
   function viewPoints() {
     var st = A.st;
@@ -604,6 +624,16 @@
         return '<tr><td><code>' + esc(r.key) + '</code></td><td style="width:140px"><input type="text" data-setkey="' + esc(r.key) + '" value="' + esc(r.value) + '"></td><td class="small muted">' + esc(r.note) + '</td></tr>';
       }).join('') + '</tbody></table></div></div>' +
 
+      (function () {
+        var iv = investPreview();
+        if (!iv.tops.length) return '<div class="card"><div class="card-title"><h2>🎯 1등 도시 투자 성공 보상</h2></div><p class="muted small">투표 결과가 나오면 여기에 학생별 보상이 보여요.</p></div>';
+        return '<div class="card"><div class="card-title"><h2>🎯 1등 도시 투자 성공 보상</h2><span class="chip">미리보기</span></div>' +
+          '<p class="small muted">1등 도시(' + iv.tops.map(function (r) { return esc(r.icon + ' ' + r.city); }).join(', ') + ')에 투자한 코인만 ÷ ' + iv.div + ', 반올림. 다른 도시에 투자한 코인은 해당하지 않아요. ' +
+          '[계산해서 Export_Points에 기록]을 누르면 항목코드 <code>INVEST</code>로 함께 기록돼요.</p>' +
+          (iv.div > 0 ? '<p class="small">학생 ' + iv.list.length + '명 / 합계 ' + iv.total + '점</p><div class="table-wrap"><table class="tbl"><thead><tr><th>번호</th><th>이름</th><th>1등 도시 투자 코인</th><th>보상</th></tr></thead><tbody>' +
+            iv.list.map(function (x) { return '<tr><td>' + esc(x.no) + '</td><td>' + esc(x.name) + '</td><td>' + x.coins + '</td><td><b>' + x.points + '점</b></td></tr>'; }).join('') +
+            '</tbody></table></div>' : '<p class="chip warn">INVEST_WIN_DIVISOR가 0이라 보상이 꺼져 있어요.</p>') + '</div>';
+      })() +
       '<div class="card"><div class="card-title"><h2>포인트 내보내기</h2><div class="grow"></div>' +
       '<button class="btn primary" id="btnExport">계산해서 Export_Points에 기록</button></div>' +
       '<p class="small muted">누를 때마다 Export_Points 탭을 새로 계산해 덮어써요. 지급ID(프로젝트ID-번호-항목)가 같으면 같은 지급이라 그로스포인트에서 중복을 막을 수 있어요.</p>' +
