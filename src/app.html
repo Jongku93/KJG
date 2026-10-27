@@ -27,7 +27,7 @@ html,body{margin:0}
 body{background:var(--bg);background-image:radial-gradient(1200px 380px at 50% -120px,#e3e5fb 0%,rgba(227,229,251,0) 70%);letter-spacing:-.15px;color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
-.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 40px}
+.wrap{max-width:1280px;margin:0 auto;padding:22px 16px 40px}
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;color:var(--ink);margin-bottom:18px;flex-wrap:wrap}
 header.top h1{margin:0;font-size:30px;letter-spacing:-1px;font-weight:850;display:flex;align-items:center;gap:10px}
 header.top h1 .logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(140deg,#5b5fe6,#3a3db8);box-shadow:0 6px 14px -6px rgba(75,79,216,.6);display:grid;place-items:center}
@@ -154,7 +154,7 @@ label.check input{width:18px;height:18px;accent-color:var(--accent)}
 .checks .tag{font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;background:var(--amber-soft);color:#9a5d00;margin-left:4px;vertical-align:1px}
 .subh{font-size:14px;font-weight:800;margin:14px 0 8px}
 /* toast & drag */
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:14px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:100;max-width:min(92vw,560px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:14px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:100;max-width:min(92vw,560px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.warn{background:#a8323a}
 .drag-av{position:fixed;left:0;top:0;pointer-events:none;z-index:90;width:56px;height:56px;border-radius:14px;background:#fff;border:2px solid var(--accent);box-shadow:0 8px 20px rgba(20,30,80,.25);display:grid;place-items:center;color:var(--ink);transition:opacity .1s}
@@ -175,6 +175,23 @@ footer{color:var(--soft);font-size:12px;text-align:center;margin-top:18px}
   #printArea{display:block}
   #printArea svg{width:100%;height:auto}
 }
+/* 설정 접기 · 떠 있는 재생 막대 */
+.setup-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--card-b);border-radius:16px;padding:10px 12px 10px 16px;box-shadow:var(--shadow);margin-bottom:12px}
+.setup-bar .sum{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.setup-bar .sum b{font-size:14px;margin-right:4px}
+.pill{background:#fff;border:1px solid var(--card-b);border-radius:999px;padding:4px 11px;font-size:13px;font-weight:700;color:var(--ink)}
+.setup-bar button.tog{border:0;background:var(--ink);color:#fff;border-radius:11px;padding:8px 14px;font-weight:800;font-size:13.5px}
+#setupGrid.collapsed{display:none}
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;background:rgba(28,34,51,.94);color:#fff;border-radius:999px;padding:7px 8px 7px 7px;box-shadow:0 14px 34px -10px rgba(28,34,51,.55);backdrop-filter:blur(8px)}
+.dock .dplay{width:44px;height:44px;border-radius:50%;border:0;background:linear-gradient(140deg,#6b6ff0,#4b4fd8);color:#fff;font-size:17px;font-weight:900;display:grid;place-items:center}
+.dock .dplay.stop{background:var(--red)}
+.dock select{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
+.dock select option{color:#1c2233}
+.dock .dtime{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:#c9cce0;min-width:76px;text-align:center}
+.dock .dbar{width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}
+.dock .dbar i{display:block;height:100%;width:0;background:#8f93ff}
+@media (max-width:560px){.dock .dbar{display:none}.dock{bottom:10px}}
+#page-compose{padding-bottom:70px}
 /* 상단 탭 */
 .apptabs{display:flex;gap:4px;background:#fff;border:1px solid var(--card-b);box-shadow:var(--shadow);border-radius:16px;padding:5px}
 .apptabs button{border:0;background:transparent;color:var(--muted);font-weight:800;border-radius:11px;padding:9px 16px;display:inline-flex;align-items:center;gap:7px;font-size:15px}
@@ -332,7 +349,8 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
     <button class="btn-ghost" id="btnSample">예시 가락 보기</button>
     <button class="btn-ghost" id="btnNew">새 악보</button>
   </div>
-  <div class="grid g-2">
+  <div class="setup-bar" id="setupBar"><div class="sum"><b>설정</b><span class="pill" id="sumKey"></span><span class="pill" id="sumTs"></span><span class="pill" id="sumMs"></span><span class="pill" id="sumTempo"></span></div><button class="tog" id="setupTog">설정 접기 ▴</button></div>
+  <div class="grid g-2" id="setupGrid">
     <section class="card" id="cardKey">
       <h2><span class="num">1</span>조 · 박자 · 마디</h2>
       <div class="keybox">
@@ -620,6 +638,7 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
 
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
+<div class="dock" id="dock"><button class="dplay" id="dPlay" aria-label="재생">▶</button><select id="dInst" aria-label="악기"></select><div class="dbar"><i id="dBar"></i></div><span class="dtime" id="dTime">0:00</span></div>
 
 <dialog id="arpDlg"><div class="dlg">
   <h3>〰 아르페지오란?</h3>
@@ -1270,6 +1289,8 @@ function renderSettings(){
   $('tempoSl').value = doc.tempo;
   document.querySelectorAll('[data-inst]').forEach(b => b.classList.toggle('on', b.dataset.inst === doc.instrument));
   $('paperMeta').textContent = `${k.ko} · ${doc.ts[1]}분의 ${doc.ts[0]}박자 · ${doc.measures.length}마디`;
+  $('sumKey').textContent = k.ko; $('sumTs').textContent = `${doc.ts[0]}/${doc.ts[1]}박자`; $('sumMs').textContent = `${doc.measures.length}마디`; $('sumTempo').textContent = `♩=${doc.tempo}`;
+  $('dInst').value = doc.instrument;
   renderPalette();
 }
 function drawKeyPreview(){
@@ -1933,6 +1954,7 @@ function animate(){
   const el = Math.max(0, now - player.t0);
   $('progBar').style.width = Math.min(100, el / totalSec * 100) + '%';
   $('progTx').textContent = `${fmtT(el)} / ${fmtT(totalSec)}`;
+  $('dTime').textContent = `${fmtT(el)} / ${fmtT(totalSec)}`; $('dBar').style.width = Math.min(100, el / totalSec * 100) + '%';
   // 지금 소리 나는 음표 표시
   let cur = null;
   for (const it of player.q) { if (it.kind !== 'ev') continue; if (it.tick > tick) break; if (tick < it.tick + it.dur) cur = it; }
@@ -1971,6 +1993,8 @@ let restartT = null;
 function restartPlaybackSoon(){ clearTimeout(restartT); restartT = setTimeout(() => { if (player) startPlayback(player.fromM); }, 250); }
 function togglePlay(){ if (player) stopPlayback(); else startPlayback(0); }
 function setPlayUI(on){
+  $('dPlay').classList.toggle('stop', on); $('dPlay').textContent = on ? '■' : '▶';
+  if (!on) { $('dBar').style.width = '0%'; }
   $('btnPlay').classList.toggle('stop', on);
   $('playIc').textContent = on ? '■' : '▶';
   $('playTx').textContent = on ? '정지' : '재생';
@@ -2585,6 +2609,7 @@ function showPage(pg){
   currentPage = pg;
   ['compose', 'theory', 'manual'].forEach(p => { $('page-' + p).hidden = p !== pg; });
   document.querySelectorAll('.apptabs [data-page]').forEach(b => b.classList.toggle('on', b.dataset.page === pg));
+  $('dock').style.display = pg === 'compose' ? '' : 'none';
   if (pg !== 'compose') { closeChordPop(); if (player) stopPlayback(); }
   if (pg !== 'theory') stopExample();
   if (pg === 'theory') { if (!thKeyId) thKeyId = doc.key; renderLesson(); }
@@ -2604,7 +2629,7 @@ const TOUR = [
   { el:'#navManual', t:'사용 설명서', d:'자세한 사용법과 단축키, 자주 묻는 질문이 있어요. 언제든 다시 볼 수 있어요.' },
 ];
 const tour = { on:false, i:0 };
-function startTour(){ showPage('compose'); tour.on = true; tour.i = 0; $('tour').classList.add('show'); $('welcome').classList.remove('show'); try { localStorage.setItem('doremi-toured', '1'); } catch(_) {} tourStep(); }
+function startTour(){ showPage('compose'); setSetupOpen(true); tour.on = true; tour.i = 0; $('tour').classList.add('show'); $('welcome').classList.remove('show'); try { localStorage.setItem('doremi-toured', '1'); } catch(_) {} tourStep(); }
 function endTour(){ tour.on = false; $('tour').classList.remove('show'); }
 function tourStep(){
   const s = TOUR[tour.i]; const el = document.querySelector(s.el); if (!el) { endTour(); return; }
@@ -2636,7 +2661,21 @@ function fillManualIcons(){
   });
 }
 
+function setSetupOpen(open){
+  $('setupGrid').classList.toggle('collapsed', !open);
+  $('setupTog').textContent = open ? '설정 접기 ▴' : '설정 펼치기 ▾';
+  try { localStorage.setItem('doremi-setup', open ? '1' : '0'); } catch(_) {}
+  if (!open) requestAnimationFrame(renderScore);
+}
 function initExtras(){
+  $('setupTog').onclick = () => setSetupOpen($('setupGrid').classList.contains('collapsed'));
+  $('setupBar').querySelector('.sum').onclick = () => setSetupOpen(true);
+  let so = null; try { so = localStorage.getItem('doremi-setup'); } catch(_) {}
+  setSetupOpen(so === null ? !hasNotes() : so === '1');
+  $('dInst').innerHTML = INSTRUMENTS.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+  $('dInst').value = doc.instrument;
+  $('dInst').onchange = e => { doc.instrument = e.target.value; renderSettings(); saveLocal(); previewSound(midiOf(32, 0), 0.5); };
+  $('dPlay').onclick = togglePlay;
   $('chkChords').addEventListener('change', e => { view.chords = e.target.checked; closeChordPop(); refreshAll(); });
   $('progSel').addEventListener('change', e => { const v = e.target.value; e.target.value = ''; if (v) applyProgression(v); });
   $('chordPop').addEventListener('click', e => {
