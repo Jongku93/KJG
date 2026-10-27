@@ -1,0 +1,18 @@
+name: 빌드 확인
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: src/app.html로 index.html 다시 만들기
+        run: python3 tools/build.py
+      - name: 배포용 index.html이 원본과 같은지 확인
+        run: git diff --exit-code -- index.html
+      - name: 스크립트 문법 확인
+        run: |
+          node -e "const s=require('fs').readFileSync('index.html','utf8');const m=s.match(/<script>([\s\S]*)<\/script>/);new Function(m[1]);console.log('ok')"

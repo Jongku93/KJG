@@ -393,6 +393,10 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
       <div class="tool-row">
         <span class="lbl">임시표</span>
         <div class="accs" id="accPal"></div>
+        <div class="sep"></div>
+        <span class="lbl">줄</span>
+        <button class="mini" id="btnTie" title="고른 음과 다음 같은 높이 음을 붙임줄로 잇기 (T)"><b style="font-size:16px">⌒</b> 붙임줄</button>
+        <button class="mini" id="btnSlur" title="고른 음부터 이음줄 늘리기 (S)"><b style="font-size:16px">⌒</b> 이음줄</button>
         <div class="spacer"></div>
         <button class="mini" id="btnUndo" title="되돌리기 (Ctrl+Z)">↶ 되돌리기</button>
         <button class="mini" id="btnRedo" title="다시하기 (Ctrl+Y)">↷ 다시하기</button>
@@ -473,6 +477,7 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
         <a href="#m-place">음표·쉼표 놓기</a>
         <a href="#m-edit">고치기</a>
         <a href="#m-acc">임시표 ♯ ♭ ♮</a>
+        <a href="#m-tie">붙임줄·이음줄</a>
         <a href="#m-chord">화음 길잡이와 반주</a>
         <a href="#m-lyric">가사·계이름</a>
         <a href="#m-play">듣기</a>
@@ -530,6 +535,15 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
           <div class="idea amber">임시표는 <b>그 마디 안에서만</b>, 그리고 <b>같은 자리(같은 높이)의 음</b>에 계속 효과가 있어요. 다음 마디로 넘어가면 사라져요.</div>
         </section>
 
+        <section class="card msec" id="m-tie">
+          <h4>붙임줄·이음줄 <span class="tg">NEW</span></h4>
+          <div class="howto">
+            <div class="hw"><span class="vis">⌒</span><div><b>붙임줄</b><span><b>같은 높이</b>의 두 음을 이어 한 음처럼 길게 소리 내요. 앞 음을 고르고 ‘붙임줄’ 버튼(또는 <span class="kbd">T</span>)을 눌러요. 마디를 넘어가는 긴 음을 쓸 때 편해요.</span></div></div>
+            <div class="hw"><span class="vis">⌒</span><div><b>이음줄</b><span><b>높이가 다른</b> 여러 음을 부드럽게 이어서 연주하라는 표시예요. 시작할 음을 고르고 ‘이음줄’ 버튼(또는 <span class="kbd">S</span>)을 누를 때마다 뒤의 음까지 한 음씩 길어져요. 줄이려면 편집 줄의 ⟵ 또는 <span class="kbd">Shift</span>+<span class="kbd">S</span>.</span></div></div>
+          </div>
+          <div class="idea amber">붙임줄을 다시 누르면 빠지고, 이음줄은 ⟵를 눌러 줄이면 없어져요.</div>
+        </section>
+
         <section class="card msec" id="m-chord">
           <h4>화음 길잡이와 반주 <span class="tg">NEW</span></h4>
           <div class="howto">
@@ -574,6 +588,7 @@ details.faq p{margin:8px 0 2px;color:var(--muted);font-weight:600;font-size:14px
             <tr><td><span class="kbd">Delete</span></td><td>고른 음 지우기</td></tr>
             <tr><td><span class="kbd">#</span> <span class="kbd">B</span> <span class="kbd">N</span> <span class="kbd">0</span></td><td>올림표 / 내림표 / 제자리표 / 임시표 빼기</td></tr>
             <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">Z</span> · <span class="kbd">Ctrl</span>+<span class="kbd">Y</span></td><td>되돌리기 · 다시하기</td></tr>
+            <tr><td><span class="kbd">T</span> · <span class="kbd">S</span> / <span class="kbd">Shift</span>+<span class="kbd">S</span></td><td>붙임줄 넣기·빼기 · 이음줄 늘리기 / 줄이기</td></tr>
             <tr><td><span class="kbd">Esc</span></td><td>연속 놓기 그만 · 선택 풀기</td></tr>
           </table>
         </section>
@@ -707,6 +722,8 @@ function sanitizeDoc(d){
       .map(n => ({ step:n.step, acc: ACC_VAL[n.acc] !== undefined ? n.acc : null }))
       .sort((a,b) => a.step - b.step),
     lyric: String(ev.lyric || '').slice(0, 6),
+    tie: !ev.rest && !!ev.tie,
+    slur: ev.rest ? 0 : Math.max(0, Math.min(32, Math.round(+ev.slur || 0))),
   })).filter(ev => ev.rest || ev.notes.length));
   if (!out.measures.length) out.measures = [[]];
   out.chords = out.measures.map((_, i) => d.chords && CHORD_SYMS.includes(d.chords[i]) ? d.chords[i] : null);
@@ -934,6 +951,7 @@ function beamGroups(evs){
 }
 
 function drawScore(L, mode){
+  geoMap = {};
   const exp = mode !== 'screen';
   const key = curKey();
   const out = [];
@@ -972,6 +990,7 @@ function drawScore(L, mode){
     }
     sys.measures.forEach(mi => drawMeasure(L.measures[mi], out, exp, sys));
   });
+  drawCurves(L, out);
   return out.join('');
 }
 
@@ -1046,6 +1065,8 @@ function drawMeasure(M, out, exp, sys){
     g.items.forEach(i => geo[i].tip = g.at(geo[i].stemX));
   });
 
+  // 붙임줄·이음줄용 위치 기록
+  geo.forEach((G, i) => { if (!evs[i].rest) geoMap[mi + ':' + i] = { sys, Y, ...G, ys: G.steps.map(Y) }; });
   // 음표 그리기
   evs.forEach((ev, i) => {
     const G = geo[i];
@@ -1378,6 +1399,7 @@ function renderEditPanel(){
     h += ['sharp','flat','natural'].map(x => `<button class="mini${a === x ? ' on' : ''}" data-act="acc" data-v="${x}" title="${ACC_NAME[x]}">${ACC_SYM[x]} ${ACC_NAME[x]}</button>`).join('');
     h += `<button class="mini${!a ? ' on' : ''}" data-act="acc" data-v="none">임시표 없음</button><div class="sep"></div>`;
   }
+  if (!ev.rest) h += `<button class="mini${ev.tie ? ' on' : ''}" data-act="tie" title="붙임줄 (T)">⌒ 붙임줄</button><button class="mini${ev.slur ? ' on' : ''}" data-act="slurPlus" title="이음줄 늘리기 (S)">⌒ 이음줄 ⟶${ev.slur ? ' ' + (ev.slur + 1) + '음' : ''}</button>${ev.slur ? '<button class="mini" data-act="slurMinus" title="이음줄 줄이기 (Shift+S)">⟵</button>' : ''}<div class="sep"></div>`;
   h += `<label class="lbl">길이 <select data-act="dur">${durOpts}</select></label>`;
   if (!ev.rest) h += `<label class="lbl">가사 <input type="text" id="lyricIn" maxlength="6" value="${esc(ev.lyric || '')}" placeholder="한 글자"></label>`;
   h += measureTools + `<button class="mini danger" data-act="del">지우기</button><button class="mini" data-act="desel">✕</button>`;
@@ -1403,6 +1425,9 @@ $('editPanel').addEventListener('click', e => {
   else if (act === 'pasteM') { if (!clipboard) return; pushUndo(); doc.measures[sel.m] = JSON.parse(JSON.stringify(clipboard)); sel = { m: sel.m, e: -1 }; refreshAll(); toast('붙여넣었어요.'); }
   else if (act === 'clearM') { if (!doc.measures[sel.m].length) return; pushUndo(); doc.measures[sel.m] = []; sel = { m: sel.m, e: -1 }; refreshAll(); }
   else if (act === 'playFrom') startPlayback(sel.m);
+  else if (act === 'tie') toggleTie();
+  else if (act === 'slurPlus') changeSlur(1);
+  else if (act === 'slurMinus') changeSlur(-1);
 });
 $('editPanel').addEventListener('change', e => {
   if (e.target.dataset.act !== 'dur' || !sel) return;
@@ -1693,6 +1718,8 @@ document.addEventListener('keydown', e => {
     case '#': case '3': if (e.key === '#' || e.shiftKey) setAcc('sharp'); break;
     case 'b': case 'B': setAcc('flat'); break;
     case 'n': case 'N': setAcc('natural'); break;
+    case 't': case 'T': if (sel && sel.e >= 0) toggleTie(); break;
+    case 's': case 'S': if (sel && sel.e >= 0) changeSlur(e.shiftKey ? -1 : 1); break;
     case '0': setAcc('none'); break;
   }
 });
@@ -1835,14 +1862,10 @@ function buildQueue(fromM, countIn){
   const off = countIn ? cap : 0;
   const bi = beatInfo();
   if (countIn) for (let b = 0; b < bi.count; b++) q.push({ tick: b * bi.len, kind:'click', hi: b === 0, count: b + 1 });
+  const tl = melodyTimeline();
+  tl.forEach(f => { if (f.mi >= fromM && f.mi <= last) q.push({ tick: off + f.tick - fromM * cap, kind:'ev', mi: f.mi, ei: f.ei, dur: f.dur, notes: f.notes, vel: f.t % bi.len === 0 ? (f.t === 0 ? 0.95 : 0.85) : 0.75 }); });
   for (let mi = fromM; mi <= last; mi++) {
     const base = off + (mi - fromM) * cap;
-    const al = measureAlters(mi);
-    let t = 0;
-    doc.measures[mi].forEach((ev, ei) => {
-      q.push({ tick: base + t, kind:'ev', mi, ei, dur: ev.dur, midis: ev.rest ? [] : ev.notes.map((n, k) => midiOf(n.step, al[ei][k])), vel: t % bi.len === 0 ? (t === 0 ? 0.95 : 0.85) : 0.75 });
-      t += ev.dur;
-    });
     if ($('optDrum').checked) drumPattern().forEach(h => q.push({ tick: base + h.t, kind:'drum', type: h.type, vel: h.vel }));
     if ($('optAcc').checked) accompHits(mi).forEach(h => q.push({ tick: base + h.t, kind:'acc', midis: h.midis, dur: h.dur, vel: h.vel }));
     if ($('optMetro').checked) for (let b = 0; b < bi.count; b++) q.push({ tick: base + b * bi.len, kind:'click', hi: b === 0 });
@@ -1871,7 +1894,7 @@ function schedule(){
     const it = player.q[player.i];
     const t = player.t0 + it.tick * player.spb;
     if (t > ahead) break;
-    if (it.kind === 'ev') it.midis.forEach(m => playVoice(doc.instrument, m, t, it.dur * player.spb * (doc.instrument === 'recorder' ? 0.9 : 0.95), it.vel, player.bus));
+    if (it.kind === 'ev') it.notes.forEach(n => playVoice(doc.instrument, n.m, t, n.dur * player.spb * (doc.instrument === 'recorder' ? 0.9 : 0.95), it.vel, player.bus));
     else if (it.kind === 'drum') drumHit(it.type, t, it.vel * 0.8, player.bus);
     else if (it.kind === 'acc') it.midis.forEach(m => playVoice('piano', m, t, it.dur * player.spb * 0.92, it.vel, player.bus));
     else if (it.kind === 'click') drumHit(it.hi ? 'clickHi' : 'click', t, 1, player.bus);
@@ -1961,22 +1984,17 @@ function buildMidi(){
   // 1번 트랙: 가락
   const t1 = [{ t:0, o:0, d: metaText(0x03, 'Melody (' + inst.id + ')') }, { t:0, o:1, d:[0xc0, inst.prog] }];
   const bi = beatInfo();
-  for (let mi = 0; mi <= last; mi++) {
-    const al = measureAlters(mi); let t = 0;
-    doc.measures[mi].forEach((ev, ei) => {
-      const start = (mi * cap + t) * T16, end = start + ev.dur * T16;
-      if (!ev.rest) {
-        const vel = t === 0 ? 96 : t % bi.len === 0 ? 88 : 80;
-        if (ev.lyric) t1.push({ t:start, o:1, d: metaText(0x05, ev.lyric) });
-        ev.notes.forEach((n, k) => {
-          const m = Math.max(0, Math.min(127, midiOf(n.step, al[ei][k])));
-          t1.push({ t:start, o:2, d:[0x90, m, vel] });
-          t1.push({ t:end, o:0, d:[0x80, m, 0] });
-        });
-      }
-      t += ev.dur;
+  melodyTimeline().forEach(f => {
+    if (f.mi > last || f.ev.rest) return;
+    const start = f.tick * T16;
+    const vel = f.t === 0 ? 96 : f.t % bi.len === 0 ? 88 : 80;
+    if (f.ev.lyric) t1.push({ t:start, o:1, d: metaText(0x05, f.ev.lyric) });
+    f.notes.forEach(n => {
+      const m = Math.max(0, Math.min(127, n.m));
+      t1.push({ t:start, o:2, d:[0x90, m, vel] });
+      t1.push({ t:start + n.dur * T16, o:0, d:[0x80, m, 0] });
     });
-  }
+  });
   const tracks = [trackChunk(t0), trackChunk(t1)];
   if ($('optAcc').checked && doc.chords.some(c => c)) {
     const t3 = [{ t:0, o:0, d: metaText(0x03, 'Chords (piano)') }, { t:0, o:1, d:[0xc1, 0] }];
@@ -2079,6 +2097,7 @@ function renderChecks(){
     { ok: hasChord, t:'화음을 만들어 봤어요', s: '같은 길이 음표를 겹쳐 놓아요', extra:true },
     { ok: chordUse.lastI, t:'화음 길잡이를 정하고 끝 마디를 Ⅰ로 했어요', s: '‘화음 진행 틀 넣기’를 써 보아요', extra:true },
     { ok: chordUse.total >= 4 && chordUse.fit === chordUse.total, t:`마디 첫 음이 화음과 어울려요 (${chordUse.fit}/${chordUse.total}마디)`, s: '화음 칸이 모두 초록색이면 돼요', extra:true },
+    { ok: allNotes.some(e => e.tie || e.slur), t:'붙임줄이나 이음줄을 써 봤어요', s: '음을 고르고 ‘붙임줄’·‘이음줄’ 버튼을 눌러요', extra:true },
     { ok: lyricCount >= 4, t:`가사를 붙였어요 (${lyricCount}글자)`, s: '음을 고르고 ‘가사’ 칸에 적어요', extra:true },
   ];
   $('checks').innerHTML = items.map(it => `<li class="${it.ok ? 'ok' : ''}"><span class="mk">${it.ok ? '✓' : ''}</span><span>${it.t}${it.extra ? '<span class="tag">도전</span>' : ''}<small>${it.s}</small></span></li>`).join('');
@@ -2092,6 +2111,8 @@ function toast(msg, warn){
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; paletteTab = b.dataset.tab; if (tool && tool.kind !== 'acc') tool = null; renderPalette(); scoreEl.classList.toggle('tooling', !!tool); });
 $('btnUndo').onclick = undo;
+$('btnTie').onclick = toggleTie;
+$('btnSlur').onclick = () => changeSlur(1);
 $('btnRedo').onclick = redo;
 $('btnDel').onclick = deleteSel;
 $('btnClear').onclick = () => { if (!hasNotes()) return; if (!confirm('악보의 음표를 모두 지울까요? (되돌리기로 다시 살릴 수 있어요)')) return; pushUndo(); doc.measures = doc.measures.map(() => []); sel = null; refreshAll(); };
@@ -2107,6 +2128,91 @@ $('btnSample').onclick = () => {
     [], [], [], [] ], chords:['I','IV','IV','V',null,null,null,null] };
   sel = null; refreshAll(); toast('예시 가락을 불러왔어요. 재생해 보고 5마디부터 이어서 만들어 봐요!');
 };
+
+
+/* ================= 붙임줄 · 이음줄 ================= */
+let geoMap = {};
+function flatEvents(){ const out = []; doc.measures.forEach((m, mi) => m.forEach((ev, ei) => out.push({ mi, ei, ev }))); return out; }
+function nextEventOf(mi, ei){ const f = flatEvents(); const i = f.findIndex(o => o.mi === mi && o.ei === ei); return f[i + 1] || null; }
+function noteEventsAfter(mi, ei){ const f = flatEvents(); const i = f.findIndex(o => o.mi === mi && o.ei === ei); return f.slice(i + 1).filter(o => !o.ev.rest); }
+function tieTargets(mi, ei){
+  const ev = doc.measures[mi][ei], nx = nextEventOf(mi, ei);
+  if (!ev || ev.rest || !nx || nx.ev.rest) return [];
+  return ev.notes.map((n, k) => ({ k, j: nx.ev.notes.findIndex(o => o.step === n.step) })).filter(o => o.j >= 0).map(o => ({ ...o, nx }));
+}
+function curvePath(x1, y1, x2, y2, s, h){
+  const dx = x2 - x1, c1 = x1 + dx * 0.25, c2 = x2 - dx * 0.25, t = 1.8;
+  return `<path d="M${r1(x1)} ${r1(y1)}C${r1(c1)} ${r1(y1 + s*h)} ${r1(c2)} ${r1(y2 + s*h)} ${r1(x2)} ${r1(y2)}C${r1(c2)} ${r1(y2 + s*(h+t))} ${r1(c1)} ${r1(y1 + s*(h+t))} ${r1(x1)} ${r1(y1)}Z" fill="#1b2140"/>`;
+}
+function drawCurves(L, out){
+  const f = flatEvents();
+  f.forEach(({ mi, ei, ev }, idx) => {
+    if (ev.rest) return;
+    const a = geoMap[mi + ':' + ei]; if (!a) return;
+    // 붙임줄: 바로 다음 음의 같은 높이 음과 연결
+    if (ev.tie) tieTargets(mi, ei).forEach(({ k, j, nx }) => {
+      const b = geoMap[nx.mi + ':' + nx.ei]; if (!b) return;
+      const many = ev.notes.length > 1;
+      const s = many ? (k === ev.notes.length - 1 ? -1 : k === 0 ? 1 : (a.dir === 1 ? 1 : -1)) : (a.dir === 1 ? 1 : -1);
+      const y1 = a.ys[k] + s * 4, y2 = b.ys[j] + s * 4;
+      const x1 = a.xs[k] + a.hw + 1.5, x2 = b.xs[j] - 1.5;
+      if (a.sys === b.sys) out.push(curvePath(x1, y1, x2, y2, s, Math.min(7, 3 + (x2 - x1) * 0.05)));
+      else { out.push(curvePath(x1, y1, a.sys.x1 - 2, y1, s, 5)); out.push(curvePath(b.sys.hdrEnd - 8, y2, x2, y2, s, 5)); }
+    });
+    // 이음줄: 뒤의 음 slur개까지 연결
+    if (ev.slur > 0) {
+      const after = f.slice(idx + 1).filter(o => !o.ev.rest);
+      const end = after[Math.min(ev.slur, after.length) - 1]; if (!end) return;
+      const b = geoMap[end.mi + ':' + end.ei]; if (!b) return;
+      const span = [a, ...after.slice(0, Math.min(ev.slur, after.length)).map(o => geoMap[o.mi + ':' + o.ei]).filter(Boolean)];
+      const allUp = span.every(G => G.dir === 1);
+      const s = allUp ? 1 : -1;
+      const endY = G => s === 1 ? G.Y(G.lo) + 7 : (G.dir === 1 && ev.dur < 16 ? Math.min(G.tip - 3, G.Y(G.hi) - 7) : G.Y(G.hi) - 7);
+      const ext = G => s === 1 ? Math.max(G.Y(G.lo) + 6, G.dir === -1 ? G.tip + 2 : -1e9) : Math.min(G.Y(G.hi) - 6, G.dir === 1 ? G.tip - 2 : 1e9);
+      const seg = (list, x1, y1, x2, y2) => {
+        let h = Math.min(14, 5 + (x2 - x1) * 0.04);
+        list.forEach(G => { const cx = G.cx, ly = y1 + (y2 - y1) * Math.max(0, Math.min(1, (cx - x1) / ((x2 - x1) || 1))); const need = (s * (ext(G) - ly)) / 0.75 + 2; if (need > h) h = need; });
+        out.push(curvePath(x1, y1, x2, y2, s, Math.min(32, h)));
+      };
+      const x1 = a.cx, y1 = endY(a), x2 = b.cx, y2 = endY(b);
+      if (a.sys === b.sys) seg(span.slice(1, -1), x1, y1, x2, y2);
+      else {
+        seg(span.filter(G => G.sys === a.sys).slice(1), x1, y1, a.sys.x1 - 2, y1);
+        seg(span.filter(G => G.sys === b.sys).slice(0, -1), b.sys.hdrEnd - 8, y2, x2, y2);
+      }
+    }
+  });
+}
+// 붙임줄로 이어진 음은 한 번만 길게 소리 냄
+function melodyTimeline(){
+  const cap = capacity(), flat = [];
+  doc.measures.forEach((m, mi) => { const al = measureAlters(mi); let t = 0; m.forEach((ev, ei) => { flat.push({ mi, ei, ev, t, tick: mi * cap + t, dur: ev.dur, midis: ev.rest ? [] : ev.notes.map((n, k) => midiOf(n.step, al[ei][k])) }); t += ev.dur; }); });
+  flat.forEach((f, i) => {
+    const prev = flat[i - 1];
+    const joined = m => prev && prev.ev.tie && prev.midis.includes(m) && prev.tick + prev.dur === f.tick;
+    f.notes = f.midis.filter(m => !joined(m)).map(m => {
+      let dur = f.dur, j = i;
+      while (flat[j].ev.tie && flat[j + 1] && flat[j + 1].midis.includes(m) && flat[j].tick + flat[j].dur === flat[j + 1].tick) { dur += flat[j + 1].dur; j++; }
+      return { m, dur };
+    });
+  });
+  return flat;
+}
+function toggleTie(){
+  const ev = selectedEvent(); if (!ev || ev.rest) { toast('먼저 음표를 눌러 골라요.'); return; }
+  if (!ev.tie && !tieTargets(sel.m, sel.e).length) { toast('붙임줄은 바로 다음에 오는 같은 높이의 음과 이어요. 다음 음을 같은 높이로 놓아 주세요.', true); return; }
+  pushUndo(); ev.tie = !ev.tie; refreshAll();
+  toast(ev.tie ? '붙임줄을 붙였어요. 두 음이 한 음처럼 길게 소리 나요.' : '붙임줄을 뺐어요.');
+}
+function changeSlur(d){
+  const ev = selectedEvent(); if (!ev || ev.rest) { toast('먼저 이음줄을 시작할 음표를 눌러 골라요.'); return; }
+  const max = noteEventsAfter(sel.m, sel.e).length;
+  const nv = Math.max(0, Math.min(max, (ev.slur || 0) + d));
+  if (d > 0 && nv === (ev.slur || 0)) { toast('뒤에 이을 음이 더 없어요.'); return; }
+  if (nv === (ev.slur || 0)) return;
+  pushUndo(); ev.slur = nv; refreshAll();
+  if (d > 0 && nv === 1) toast('이음줄을 그렸어요. ‘이음줄 ⟶’를 더 누르면 뒤의 음까지 길어져요.');
+}
 
 /* ================= 화음 길잡이 ================= */
 // 화음 구성음: [{l: 글자(0~6), a: 변화(+1 = ♯)}]. 단조의 Ⅴ·Ⅴ7은 이끎음(7음)을 반음 올림(화성 단음계)
